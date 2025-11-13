@@ -1,0 +1,210 @@
+// 全局响应式样式
+
+// 响应式断点
+$breakpoint-phone: 320px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-large-desktop: 1440px;
+
+// 响应式混合器
+@mixin phone {
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-tablet}) and (max-width: #{$breakpoint-desktop - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-desktop}) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: #{$breakpoint-large-desktop}) {
+    @content;
+  }
+}
+
+// 响应式容器
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+
+  @include tablet {
+    max-width: 720px;
+  }
+
+  @include desktop {
+    max-width: 960px;
+  }
+
+  @include large-desktop {
+    max-width: 1200px;
+  }
+}
+
+// 响应式字体大小
+.responsive-text {
+  font-size: 14px;
+
+  @include tablet {
+    font-size: 16px;
+  }
+
+  @include desktop {
+    font-size: 18px;
+  }
+}
+
+// 响应式间距
+.responsive-spacing {
+  margin: 10px;
+  padding: 10px;
+
+  @include tablet {
+    margin: 15px;
+    padding: 15px;
+  }
+
+  @include desktop {
+    margin: 20px;
+    padding: 20px;
+  }
+}
+
+// 响应式按钮
+.responsive-button {
+  height: 40px;
+  font-size: 14px;
+  padding: 0 20px;
+
+  @include tablet {
+    height: 48px;
+    font-size: 16px;
+    padding: 0 24px;
+  }
+
+  @include desktop {
+    height: 56px;
+    font-size: 18px;
+    padding: 0 28px;
+  }
+}
+
+// 响应式输入框
+.responsive-input {
+  height: 40px;
+  font-size: 14px;
+  padding: 0 12px;
+
+  @include tablet {
+    height: 48px;
+    font-size: 16px;
+    padding: 0 16px;
+  }
+
+  @include desktop {
+    height: 56px;
+    font-size: 18px;
+    padding: 0 20px;
+  }
+}
+
+// 响应式网格布局
+.responsive-grid {
+  display: grid;
+  gap: 10px;
+
+  @include phone {
+    grid-template-columns: 1fr;
+  }
+
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  @include desktop {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  @include large-desktop {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+  }
+}
+
+// 响应式图片
+.responsive-image {
+  max-width: 100%;
+  height: auto;
+
+  @include tablet {
+    max-width: 80%;
+  }
+
+  @include desktop {
+    max-width: 60%;
+  }
+}
+
+// 响应式导航
+.responsive-nav {
+  display: flex;
+  flex-direction: column;
+
+  @include tablet {
+    flex-direction: row;
+  }
+}
+
+// 响应式隐藏/显示类
+.hide-on-phone {
+  @include phone {
+    display: none !important;
+  }
+}
+
+.hide-on-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+.hide-on-desktop {
+  @include desktop {
+    display: none !important;
+  }
+}
+
+.show-on-phone {
+  display: none !important;
+
+  @include phone {
+    display: block !important;
+  }
+}
+
+.show-on-tablet {
+  display: none !important;
+
+  @include tablet {
+    display: block !important;
+  }
+}
+
+.show-on-desktop {
+  display: none !important;
+
+  @include desktop {
+    display: block !important;
+  }
+}
