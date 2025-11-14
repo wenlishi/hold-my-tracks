@@ -95,24 +95,7 @@
     </view>
     </view>
 
-    <!-- 搜索条件提示 -->
-    <view v-if="hasSearchConditions" class="search-conditions">
-      <text class="conditions-text">搜索条件：</text>
-      <view class="condition-tags">
-        <view v-if="searchKeyword" class="condition-tag">
-          <text>关键字：{{ searchKeyword }}</text>
-          <uni-icons type="clear" size="14" color="#999" @click="clearKeyword"></uni-icons>
-        </view>
-        <view v-if="startDate" class="condition-tag">
-          <text>开始：{{ formatDate(startDate) }}</text>
-          <uni-icons type="clear" size="14" color="#999" @click="clearStartDate"></uni-icons>
-        </view>
-        <view v-if="endDate" class="condition-tag">
-          <text>结束：{{ formatDate(endDate) }}</text>
-          <uni-icons type="clear" size="14" color="#999" @click="clearEndDate"></uni-icons>
-        </view>
-      </view>
-    </view>
+    <!-- 搜索条件提示（已移除，避免遮挡内容） -->
   </view>
 </template>
 

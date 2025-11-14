@@ -90,7 +90,8 @@ export class PaginationManager {
    * 更新搜索参数
    */
   updateSearchParams(newParams) {
-    this.searchParams = { ...this.searchParams, ...newParams }
+    // 更新SearchParams实例的属性，而不是替换整个对象
+    Object.assign(this.searchParams, newParams)
     this._notifySearchParamsChange()
   }
 

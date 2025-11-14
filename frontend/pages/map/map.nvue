@@ -441,7 +441,7 @@
 			}
 		},	
         methods: {
-			startCollect(){
+			async startCollect(){
 				//先获取trackMsg,检查是否建立了轨迹
 				let trackMsg = uni.getStorageSync("trackMsg")
 				if(!trackMsg){
@@ -450,11 +450,25 @@
 						position:"center",
 						title:"请先新建轨迹"
 					})
-					return 
+					return
 				}
-				
+
 			     var that = this
 				console.log("点击了开始拾取")
+
+				// 设置轨迹开始时间
+				try {
+					const { trackApi } = require('@/utils/api.js');
+					const currentTime = new Date().toISOString();
+					await trackApi.updateTrack(trackMsg, {
+						startTime: currentTime,
+						status: 1 // 进行中
+					});
+					console.log('轨迹开始时间已设置:', currentTime);
+				} catch (error) {
+					console.error('设置轨迹开始时间失败:', error);
+				}
+
 				uni.showActionSheet({
 					itemList: ['5秒', '10秒', '30秒','一分钟'],
 					success (res) {
@@ -473,14 +487,14 @@
 							that.interval = 60
 						}
 						that.collectStatus="采点中..."
-						getApp().restart() 
+						getApp().restart()
 						that.hasStart = true
 							//检查是否已经开启了一个定时器
 						 if (!that.timer) {
 						    that.timer = setInterval(that.getLocation, that.interval*1000);
 						  }
 						console.log(that.interval)
-						
+
 					},
 					fail (res) {
 						console.log(res.errMsg)
@@ -510,11 +524,25 @@
 				this.timer= null;
 				console.log("点击了暂停")
 			},
-			endCollect(){
+			async endCollect(){
 				clearInterval(this.timer);
 				  // release our intervalID from the variable
-				this.timer = null; 
+				this.timer = null;
 				let lineid = uni.getStorageSync("trackMsg")
+
+				// 设置轨迹结束时间
+				try {
+					const { trackApi } = require('@/utils/api.js');
+					const currentTime = new Date().toISOString();
+					await trackApi.updateTrack(lineid, {
+						endTime: currentTime,
+						status: 2 // 已完成
+					});
+					console.log('轨迹结束时间已设置:', currentTime);
+				} catch (error) {
+					console.error('设置轨迹结束时间失败:', error);
+				}
+
 				this.updateroute(lineid)
 				this.hasStart=false
 				this.hasStoped=false
