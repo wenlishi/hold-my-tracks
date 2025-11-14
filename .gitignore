@@ -39,6 +39,8 @@ yarn-error.log*
 *.tmp
 *.temp
 
+.claude
+
 config.js
 frontend/config.js
 
