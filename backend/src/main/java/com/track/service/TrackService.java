@@ -5,6 +5,7 @@ import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
 import com.track.entity.Track;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TrackService extends IService<Track> {
@@ -47,4 +48,16 @@ public interface TrackService extends IService<Track> {
      * @return 轨迹详情对象
      */
     TrackDetail getTrackDetail(Long trackId, Long userId);
+
+    /**
+     * 搜索轨迹（支持关键字和日期范围查询）
+     * @param userId 用户ID
+     * @param keyword 搜索关键字（轨迹名称和描述）
+     * @param startDate 开始日期（可选）
+     * @param endDate 结束日期（可选）
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 分页响应对象
+     */
+    PageResponse<Track> searchTracks(Long userId, String keyword, LocalDate startDate, LocalDate endDate, int page, int pageSize);
 }

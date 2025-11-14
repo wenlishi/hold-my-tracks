@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -220,5 +223,49 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return R * c;
+    }
+
+    @Override
+    public PageResponse<Track> searchTracks(Long userId, String keyword, LocalDate startDate, LocalDate endDate, int page, int pageSize) {
+        QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
+
+        // 必须属于当前用户
+        queryWrapper.eq("user_id", userId);
+
+        // 关键字搜索（轨迹名称和描述）
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.and(wrapper -> wrapper
+                .like("track_name", keyword.trim())
+                .or()
+                .like("description", keyword.trim())
+            );
+        }
+
+        // 日期范围查询（基于创建时间）
+        if (startDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            queryWrapper.ge("create_time", startDateTime);
+        }
+        if (endDate != null) {
+            LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+            queryWrapper.le("create_time", endDateTime);
+        }
+
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc("create_time");
+
+        // 创建分页对象
+        Page<Track> trackPage = new Page<>(page, pageSize);
+
+        // 执行分页查询
+        Page<Track> resultPage = trackMapper.selectPage(trackPage, queryWrapper);
+
+        // 构建分页响应
+        return new PageResponse<>(
+            resultPage.getRecords(),
+            resultPage.getTotal(),
+            (int) resultPage.getCurrent(),
+            (int) resultPage.getSize()
+        );
     }
 }

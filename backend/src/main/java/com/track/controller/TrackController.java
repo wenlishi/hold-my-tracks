@@ -17,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,6 +128,27 @@ public class TrackController {
         }
 
         return ResponseEntity.ok(trackDetail);
+    }
+
+    /**
+     * 搜索轨迹（支持关键字和日期范围查询）
+     */
+    @GetMapping("/search")
+    public ResponseEntity<?> searchTracks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            Authentication authentication) {
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+        // 执行搜索查询
+        PageResponse<Track> pageResponse = trackService.searchTracks(
+            userPrincipal.getId(), keyword, startDate, endDate, page, pageSize);
+
+        return ResponseEntity.ok(pageResponse);
     }
 
     /**
