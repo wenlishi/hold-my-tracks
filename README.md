@@ -256,10 +256,99 @@ jobs:
    - 每次发布更新 `versionName` 和 `versionCode`
    - `versionCode` 必须递增
 
-## API接口说明
+## API接口详细说明
 
-### 轨迹搜索接口
+### 认证接口 (AuthController)
+
+#### 用户登录
+- **URL**: `POST /api/auth/login`
+- **请求体**:
+  ```json
+  {
+    "username": "用户名",
+    "password": "密码"
+  }
+  ```
+- **响应**:
+  ```json
+  {
+    "token": "JWT令牌",
+    "id": 用户ID,
+    "username": "用户名",
+    "email": "邮箱",
+    "realName": "真实姓名"
+  }
+  ```
+- **说明**: 用户登录认证，返回 JWT token
+
+#### 用户注册
+- **URL**: `POST /api/auth/register`
+- **请求体**:
+  ```json
+  {
+    "username": "用户名",
+    "password": "密码",
+    "email": "邮箱",
+    "phone": "手机号",
+    "realName": "真实姓名"
+  }
+  ```
+- **响应**:
+  ```json
+  {
+    "message": "User registered successfully!"
+  }
+  ```
+- **说明**: 新用户注册
+
+### 轨迹管理接口 (TrackController)
+
+#### 创建轨迹
+- **URL**: `POST /api/tracks`
+- **认证**: 需要 JWT token
+- **请求体**:
+  ```json
+  {
+    "trackName": "轨迹名称",
+    "description": "轨迹描述",
+    "startTime": "开始时间",
+    "endTime": "结束时间"
+  }
+  ```
+- **说明**: 创建新的轨迹记录
+
+#### 获取用户轨迹列表
+- **URL**: `GET /api/tracks`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `page` (可选): 页码，默认1
+  - `pageSize` (可选): 每页大小，默认10
+- **说明**: 获取当前用户的轨迹列表，支持分页
+
+#### 获取轨迹详情
+- **URL**: `GET /api/tracks/{id}`
+- **认证**: 需要 JWT token
+- **说明**: 获取指定轨迹的详细信息
+
+#### 更新轨迹
+- **URL**: `PUT /api/tracks/{id}`
+- **认证**: 需要 JWT token
+- **请求体**: 轨迹对象
+- **说明**: 更新轨迹信息
+
+#### 删除轨迹
+- **URL**: `DELETE /api/tracks/{id}`
+- **认证**: 需要 JWT token
+- **说明**: 删除轨迹及其关联的轨迹点数据
+
+#### 获取轨迹详情（包含轨迹点）
+- **URL**: `GET /api/tracks/{id}/detail`
+- **认证**: 需要 JWT token
+- **响应**: 包含轨迹信息和轨迹点列表的完整详情
+
+#### 搜索轨迹
 - **URL**: `GET /api/tracks/search`
+- **认证**: 需要 JWT token
 - **参数**:
   - `page` (可选): 页码，默认1
   - `pageSize` (可选): 每页大小，默认10
@@ -267,6 +356,88 @@ jobs:
   - `startDate` (可选): 开始日期，格式 `yyyy-MM-dd`
   - `endDate` (可选): 结束日期，格式 `yyyy-MM-dd`
 - **说明**: 基于 `create_time` 字段进行日期范围搜索
+
+#### 导出轨迹
+- **URL**: `GET /api/tracks/{id}/export/{format}`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `format`: 导出格式，支持 `gpx`, `kml`, `csv`, `geojson`
+- **说明**: 导出轨迹数据到不同格式
+
+### 轨迹点管理接口 (TrackPointController)
+
+#### 添加轨迹点
+- **URL**: `POST /api/tracks/{trackId}/points`
+- **认证**: 需要 JWT token
+- **请求体**:
+  ```json
+  {
+    "longitude": 经度,
+    "latitude": 纬度,
+    "altitude": 海拔,
+    "speed": 速度,
+    "accuracy": 精度,
+    "satelliteCount": 卫星数量,
+    "address": "地址信息"
+  }
+  ```
+- **说明**: 为指定轨迹添加轨迹点
+
+#### 获取轨迹点列表
+- **URL**: `GET /api/tracks/{trackId}/points`
+- **认证**: 需要 JWT token
+- **说明**: 获取指定轨迹的所有轨迹点
+
+### 移动端兼容接口 (MobileController)
+
+#### 添加轨迹点（兼容接口）
+- **URL**: `GET /api/addcoordpoint`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `liid`: 轨迹ID
+  - `x`: 经度
+  - `y`: 纬度
+  - `z`: 海拔
+  - `speed` (可选): 速度
+  - `address` (可选): 地址信息
+- **说明**: 兼容前端旧版接口的轨迹点添加
+
+#### 更新轨迹状态（兼容接口）
+- **URL**: `GET /api/updateroute`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `liid`: 轨迹ID
+- **说明**: 将轨迹状态更新为已完成
+
+#### 获取用户信息（兼容接口）
+- **URL**: `GET /api/getstaffinfo`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `username`: 用户名
+- **响应**:
+  ```json
+  {
+    "PhoneType": "设备型号",
+    "Account": "用户名",
+    "Name": "真实姓名",
+    "Phone": "手机号"
+  }
+  ```
+
+#### 更新设备信息（兼容接口）
+- **URL**: `GET /api/updatestaffinfo`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `username`: 用户名
+  - `phonetype`: 设备型号
+- **说明**: 更新用户的设备信息
+
+#### 通用API接口
+- **URL**: `GET /api`
+- **认证**: 需要 JWT token
+- **参数**:
+  - `action`: 操作类型，支持 `login`, `addcoordpoint`, `updateroute`, `getstaffinfo`, `updatestaffinfo`, `updatepassword`
+- **说明**: 通用接口，根据action参数执行不同操作
 
 ### 日期查询特性
 - 支持 `yyyy-MM-dd` 格式的日期参数自动转换
