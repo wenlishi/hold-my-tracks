@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>热力图</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <style>
+        html,
+        body,
+        #container {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+		.input-card{
+			/* background: blue; */
+		}
+		.maptogglebg{
+			position: fixed;
+			left: 20px;
+			top: 20px;
+			border-radius: 0.4rem;
+			background: white;
+			width: 70px;
+			display: flex;
+		    border:0;
+			justify-content: center; /* 水平居中 */
+			align-items: center; /* 垂直居中 */
+			  /* 设置高度以便于演示 */
+			  
+		}
+		.btn{
+			width: auto;
+		}
+		#maptoggle{
+			position: relative;
+			width:auto;
+			margin: 0;
+			left:0;
+			top:0;
+		}
+		.input-item{
+			/* background: blanchedalmond; */
+			justify-content: center;//使得子级元素居中
+			
+		}
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<!-- <div class="input-card" style="width: auto;">
+    <div class="input-item">
+        <button class="btn" onclick="heatmap.show()">显示热力图</button>
+    </div>
+    <div class="input-item">
+        <button class="btn" onclick="heatmap.hide()">关闭热力图</button>
+    </div>
+</div> -->
+<div class="maptogglebg" >
+	<div class="input-card" id="maptoggle">
+	    <div class="input-item" style="width:auto">
+	        <button class="btn" id="normal" >标准</button>
+	    </div>
+	    <div class="input-item"  style="width:auto">
+	        <button class="btn" id="dark">幻影黑</button>
+	    </div>
+		<div class="input-item" style="width:auto">
+		    <button class="btn" id="light" >月光银</button>
+		</div>
+<!-- 		<div class="input-item" style="width:auto">
+		    <button class="btn" id= "grey" >雅士灰</button>
+		</div> -->
+		<!-- <div class="input-item" style="width:auto">
+		    <button class="btn" id= "wine" >酱籽</button>
+		</div>
+		<div class="input-item" style="width:auto">
+		    <button class="btn" id= "blue" >靛青蓝</button>
+		</div>
+	    <div class="input-item" style="width:auto">
+	        <button class="btn" id= "darkblue">极夜蓝</button>
+	    </div>
+		<div class="input-item" style="width:auto">
+		    <button class="btn" id= "graffiti" >涂鸦</button>
+		</div> -->
+	</div>
+</div>
+<script src="https://cache.amap.com/lbs/static/es5.min.js"></script>
+<script src="https://webapi.amap.com/loader.js"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=2e902bab02ac36f4d8da43ace5f6a71c"></script>
+<script type="text/javascript" src="https://unpkg.com/@dcloudio/uni-webview-js@0.0.1/index.js"></script>
+
+<script>
+	  window.addEventListener('message', function(event) {
+	        console.log(event.data); // 输出接收到的数据
+	      });
+
+document.addEventListener('plusready', function(){  
+
+			var storedData = JSON.parse(plus.storage.getItem('heatmapData'));
+			window.heatmapData = storedData.data;
+			console.log('热力图数据:', window.heatmapData);
+
+			if (!window.heatmapData || window.heatmapData.length === 0) {
+			    alert('没有热力图数据');
+			    return;
+			}
+
+			console.log("开始初始化地图");
+			var map = new AMap.Map("container", {
+			    resizeEnable: true,
+			    center: [window.heatmapData[0]['lng'], window.heatmapData[0]['lat']],
+			    zoom: 16
+			});
+			
+			var heatmap;
+			map.plugin(["AMap.Heatmap"], function () {
+			    //初始化heatmap对象
+			    heatmap = new AMap.Heatmap(map, {
+					 
+			        radius: 25, //给定半径
+			        opacity: [0, 0.8]
+			        ,
+			        gradient:{
+			            0.5: 'blue',
+			            0.65: 'rgb(117,211,248)',
+			            0.7: 'rgb(0, 255, 0)',
+			            0.9: '#ffea00',
+			            1.0: 'red'
+			        }
+			         
+			    });
+			    //设置数据集：该数据为北京部分“公园”数据
+			    heatmap.setDataSet({
+			        data: heatmapData,
+			        max: 20
+			    });
+			});
+			//绑定地图切换点击事件
+			    var buttons = document.querySelectorAll("#maptoggle button");
+			    buttons.forEach(function(button) {
+			      button.onclick = setMapStyle;
+			    });
+			
+			    function setMapStyle() {
+			      var styleName = "amap://styles/" + this.getAttribute('id');
+			      map.setMapStyle(styleName);
+			    }
+			//判断浏览区是否支持canvas
+			function isSupportCanvas() {
+			    var elem = document.createElement('canvas');
+			    return !!(elem.getContext && elem.getContext('2d'));
+			}
+			
+			
+			function callMyFunction(data) {
+			      console.log('收到的数据：', data); // 打印收到的数据
+			    }
+			
+})
+
+    //详细的参数,可以查看heatmap.js的文档 http://www.patrick-wied.at/static/heatmapjs/docs.html
+    //参数说明如下:
+    /* visible 热力图是否显示,默认为true
+     * opacity 热力图的透明度,分别对应heatmap.js的minOpacity和maxOpacity
+     * radius 势力图的每个点的半径大小
+     * gradient  {JSON} 热力图的渐变区间 . gradient如下所示
+     *	{
+     .2:'rgb(0, 255, 255)',
+     .5:'rgb(0, 110, 255)',
+     .8:'rgb(100, 0, 255)'
+     }
+     其中 key 表示插值的位置, 0-1
+     value 为颜色值
+     */
+
+</script>
+</body>
+</html>

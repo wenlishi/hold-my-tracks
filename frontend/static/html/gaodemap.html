@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>HELLO，AMAP!</title>
+    <style>
+        html, body, #container {
+          width: 100%;
+          height: 100%;
+        }
+    </style>
+</head>
+<body>
+  <div id="container"></div>
+</body>
+<script type="text/javascript">
+  window._AMapSecurityConfig = {
+    securityJsCode:"f0e42a975472d20b634c9c14e2f6c971",
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.1.0/dist/echarts.min.js"></script>
+<script src="https://webapi.amap.com/loader.js"></script>
+<script type="text/javascript" >
+  AMapLoader.load({
+    key: "2e902bab02ac36f4d8da43ace5f6a71c",       // 申请好的Web端开发者Key，首次调用 load 时必填
+    version: "2.0",                 // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
+  }).then((AMap)=>{
+    const map = new AMap.Map('container');
+  }).catch((e)=>{
+    console.error(e);  //加载错误提示
+  });   
+</script>
+</html>
