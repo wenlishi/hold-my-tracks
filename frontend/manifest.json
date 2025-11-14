@@ -27,7 +27,7 @@
             "android" : {
 				"useAmap": true,
 				   "amap": {
-					  "apiKey": "d9ae6804da519e44d97aa802fb42c739"
+					  "apiKey": "YOUR_AMAP_ANDROID_API_KEY_HERE"
 				},
                 "permissions" : [
                     "<uses-feature android:name=\"android.hardware.camera\"/>",
@@ -62,15 +62,15 @@
                 "ad" : {},
                 "maps" : {
                     "amap" : {
-                        "appkey_ios" : "d9ae6804da519e44d97aa802fb42c739",
-                        "appkey_android" : "d9ae6804da519e44d97aa802fb42c739"
+                        "appkey_ios" : "YOUR_AMAP_IOS_API_KEY_HERE",
+                        "appkey_android" : "YOUR_AMAP_ANDROID_API_KEY_HERE"
                     }
                 },
                 "geolocation" : {
                     "amap" : {
                         "__platform__" : [ "android" ],
-                        "appkey_ios" : "d9ae6804da519e44d97aa802fb42c739",
-                        "appkey_android" : "d9ae6804da519e44d97aa802fb42c739"
+                        "appkey_ios" : "YOUR_AMAP_IOS_API_KEY_HERE",
+                        "appkey_android" : "YOUR_AMAP_ANDROID_API_KEY_HERE"
                     }
                 }
             },
@@ -143,7 +143,7 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "",
+        "appid" : "YOUR_WECHAT_MINI_PROGRAM_APPID",
         "setting" : {
             "urlCheck" : false
         },
@@ -166,8 +166,8 @@
         "sdkConfigs" : {
             "maps" : {
                 "amap" : {
-                    "key" : "8a6b49f9afbaf0b6aede8f8b67d85dc9",
-                    "securityJsCode" : "7220dfb27cb51bd195a0110c2800b94c",
+                    "key" : "YOUR_AMAP_H5_API_KEY",
+                    "securityJsCode" : "YOUR_AMAP_H5_SECURITY_JS_CODE",
                     "serviceHost" : ""
                 }
             }
