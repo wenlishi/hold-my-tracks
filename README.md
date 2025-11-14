@@ -2,6 +2,22 @@
 
 一个基于uni-app开发的个人轨迹管理与分析移动应用，包含前端移动端和后端服务。
 
+## 快速开始
+
+### 后端启动
+```bash
+cd backend
+# 配置数据库连接信息
+vim src/main/resources/application.yml
+# 启动服务
+mvn spring-boot:run
+```
+
+### 前端启动
+1. 使用 HBuilderX 打开 `frontend` 目录
+2. 配置 `config.js` 中的后端 API 地址
+3. 选择运行平台并启动
+
 ## 项目结构
 
 ```
@@ -14,16 +30,34 @@
 │   ├── common/           # 公共代码
 │   ├── nativeplugins/    # 原生插件
 │   ├── App.vue           # 应用入口
+|   ├── config.js         # 环境变量配置(后端地址)
 │   ├── main.js           # 主程序
 │   ├── manifest.json     # 应用配置
 │   ├── pages.json        # 页面配置
 │   ├── package.json      # 依赖配置
 │   └── vue.config.js     # Vue配置
 ├── backend/              # Java后端服务
-│   ├── src/              # 源代码
-│   ├── pom.xml           # Maven配置
-│   ├── Dockerfile        # 容器配置
-│   └── docker-compose.yml # 容器编排
+│   ├── src/
+│   │   └── main/java/com/track/
+│   │       ├── config/           # 配置类
+│   │       │   └── WebConfig.java # Web配置（日期转换器等）
+│   │       ├── controller/       # 控制器层
+│   │       │   └── TrackController.java # 轨迹API控制器
+│   │       ├── dto/              # 数据传输对象
+│   │       ├── entity/           # 实体类
+│   │       ├── mapper/           # MyBatis映射器
+│   │       │   └── TrackMapper.java
+│   │       ├── security/         # 安全配置
+│   │       ├── service/          # 服务接口层
+│   │       │   └── TrackService.java
+│   │       └── service/impl/     # 服务实现层
+│   │           └── TrackServiceImpl.java
+│   ├── src/main/resources/
+│   │   ├── application.yml       # 应用配置文件
+│   │   └── schema.sql            # 数据库初始化脚本
+│   ├── pom.xml                   # Maven配置
+│   ├── Dockerfile                # 容器配置
+│   └── docker-compose.yml        # 容器编排
 ├── unpackage/            # 构建产物（不上传）
 ├── .gitignore            # Git忽略配置
 └── README.md             # 项目说明
@@ -38,9 +72,12 @@
 - Axios网络请求
 
 ### 后端
-- Java
-- Spring Boot
-- Maven
+- Java 8+
+- Spring Boot 2.x
+- MyBatis Plus (ORM框架)
+- PostgreSQL (数据库)
+- Maven (依赖管理)
+- Spring Security (安全认证)
 
 ## 环境配置
 
@@ -82,9 +119,27 @@
    - 点击运行按钮启动开发环境
 
 ### 后端配置
-1. 安装Java 8+
-2. 安装Maven
-3. 运行：`mvn spring-boot:run`
+
+1. **环境要求**
+   - Java 8+
+   - Maven 3.6+
+   - PostgreSQL 12+
+
+2. **数据库配置**
+   - 创建数据库：`track_db`
+   - 修改 `application.yml` 中的数据库连接信息
+   - 系统启动时会自动执行 `schema.sql` 创建表结构
+
+3. **运行项目**
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+4. **配置说明**
+   - **WebConfig.java**: 配置日期转换器，支持 `yyyy-MM-dd` 格式的日期参数自动转换
+   - **application.yml**: 应用配置文件，包含数据库、服务器端口等配置
+   - **schema.sql**: 数据库初始化脚本，包含表结构和索引
 
 ## APK打包教程
 
@@ -200,6 +255,23 @@ jobs:
 4. **版本管理**
    - 每次发布更新 `versionName` 和 `versionCode`
    - `versionCode` 必须递增
+
+## API接口说明
+
+### 轨迹搜索接口
+- **URL**: `GET /api/tracks/search`
+- **参数**:
+  - `page` (可选): 页码，默认1
+  - `pageSize` (可选): 每页大小，默认10
+  - `keyword` (可选): 搜索关键字（轨迹名称和描述）
+  - `startDate` (可选): 开始日期，格式 `yyyy-MM-dd`
+  - `endDate` (可选): 结束日期，格式 `yyyy-MM-dd`
+- **说明**: 基于 `create_time` 字段进行日期范围搜索
+
+### 日期查询特性
+- 支持 `yyyy-MM-dd` 格式的日期参数自动转换
+- 日期范围查询：`startDate` 到 `endDate` 之间的所有记录
+- 时间范围：`startDate 00:00:00` 到 `endDate 23:59:59`
 
 ## API密钥配置
 
