@@ -103,13 +103,6 @@
                   <text>可视化</text>
                 </view>
                 <view
-                  class="action-btn blue"
-                  @click.stop="gotoJingdu(track.id || track.trackMsg)"
-                >
-                  <uni-icons type="stats-bars" size="16" color="#666"></uni-icons>
-                  <text>精度计算</text>
-                </view>
-                <view
                   class="action-btn delete"
                   @click.stop="showDeleteConfirm(track)"
                 >
@@ -481,14 +474,6 @@ export default {
       console.log('跳转到可视化:', trackId)
       uni.navigateTo({
         url: `/pages/trackDetail/trackDetail?id=${trackId}`
-      })
-    },
-
-    // 跳转到精度计算
-    gotoJingdu(trackId) {
-      console.log('跳转到精度计算:', trackId)
-      uni.navigateTo({
-        url: `/pages/Jingdu/Jingdu?trackId=${trackId}`
       })
     },
 
