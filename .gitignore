@@ -19,6 +19,9 @@ frontend/package-lock.json
 Thumbs.db
 desktop.ini
 
+manifest.json
+frontend/manifest.json
+
 # 日志文件
 *.log
 npm-debug.log*
