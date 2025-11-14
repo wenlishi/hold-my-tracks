@@ -464,35 +464,47 @@ jobs:
 ## 应用截图展示
 
 ### 登录页面
-<img src="screenshots/login.png" width="300" alt="登录页面">
+<div align="center">
+  <img src="screenshots/login.png" width="300" alt="登录页面">
+</div>
 - 用户登录界面
 - 支持用户名密码登录
 
 ### 地图采集页面
-<img src="screenshots/map-collect.png" width="300" alt="地图采集">
+<div align="center">
+  <img src="screenshots/map-collect.png" width="300" alt="地图采集">
+</div>
 - 实时位置显示
 - 轨迹点采集功能
 - 地图可视化
 
 ### 轨迹管理页面
-<img src="screenshots/track-management.png" width="300" alt="轨迹管理">
+<div align="center">
+  <img src="screenshots/track-management.png" width="300" alt="轨迹管理">
+</div>
 - 个人轨迹列表
 - 轨迹搜索和筛选
 - 日期范围查询
 
 ### 轨迹详情页面
-<img src="screenshots/track-detail.png" width="300" alt="轨迹详情">
+<div align="center">
+  <img src="screenshots/track-detail.png" width="300" alt="轨迹详情">
+</div>
 - 轨迹详细信息
 - 轨迹点数据展示
 - 统计信息
 
 ### 热力图展示
-<img src="screenshots/heatmap.png" width="300" alt="热力图">
+<div align="center">
+  <img src="screenshots/heatmap.png" width="300" alt="热力图">
+</div>
 - 轨迹点密度热力图
 - 活动热点区域可视化
 
 ### 个人中心
-<img src="screenshots/user-profile.png" width="300" alt="个人中心">
+<div align="center">
+  <img src="screenshots/user-profile.png" width="300" alt="个人中心">
+</div>
 - 用户信息管理
 - 设备信息配置
 
