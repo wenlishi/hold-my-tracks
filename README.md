@@ -17,6 +17,7 @@ mvn spring-boot:run
 1. 使用 HBuilderX 打开 `frontend` 目录
 2. 配置 `config.js` 中的后端 API 地址
 3. 选择运行平台并启动
+4. 如需截图展示，可在各功能页面截图并放入 `screenshots` 目录
 
 ## 项目结构
 
@@ -59,6 +60,7 @@ mvn spring-boot:run
 │   ├── Dockerfile                # 容器配置
 │   └── docker-compose.yml        # 容器编排
 ├── unpackage/            # 构建产物（不上传）
+├── screenshots/          # 应用截图目录
 ├── .gitignore            # Git忽略配置
 └── README.md             # 项目说明
 ```
@@ -458,6 +460,41 @@ jobs:
 - 轨迹数据展示
 - 地图轨迹可视化
 - 轨迹点热力图
+
+## 应用截图展示
+
+### 登录页面
+![登录页面](screenshots/login.png)
+- 用户登录界面
+- 支持用户名密码登录
+
+### 地图采集页面
+![地图采集](screenshots/map-collect.png)
+- 实时位置显示
+- 轨迹点采集功能
+- 地图可视化
+
+### 轨迹管理页面
+![轨迹管理](screenshots/track-management.png)
+- 个人轨迹列表
+- 轨迹搜索和筛选
+- 日期范围查询
+
+### 轨迹详情页面
+![轨迹详情](screenshots/track-detail.png)
+- 轨迹详细信息
+- 轨迹点数据展示
+- 统计信息
+
+### 热力图展示
+![热力图](screenshots/heatmap.png)
+- 轨迹点密度热力图
+- 活动热点区域可视化
+
+### 个人中心
+![个人中心](screenshots/user-profile.png)
+- 用户信息管理
+- 设备信息配置
 
 ## 许可证
 
