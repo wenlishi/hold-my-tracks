@@ -39,6 +39,9 @@ yarn-error.log*
 *.tmp
 *.temp
 
+config.js
+frontend/config.js
+
 # 缓存目录
 node_modules/
 frontend/node_modules/
