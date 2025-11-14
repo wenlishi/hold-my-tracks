@@ -1,0 +1,169 @@
+{
+	"easycom": {
+	    "autoscan": true,
+	    "custom": {
+	      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+	    }
+	},
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		
+		{
+		    "path" : "pages/map/map",
+		    "style" :                                                                                    
+		    {
+		        "navigationBarTitleText": "点采集",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		},
+		// {
+		//     "path" : "pages/collectPoint/collectPoint",
+		//     "style" :                                                                                    
+		//     {
+		//         "navigationBarTitleText": "点采集",
+		//         "enablePullDownRefresh": false
+		//     }
+		    
+		// },
+		
+		
+		{
+		    "path" : "pages/login/login",
+		    "style" :                                                                                    
+		    {
+		        "navigationBarTitleText": "登录页面",
+		        "enablePullDownRefresh": false
+		    }  
+		}
+        ,
+		{
+            "path" : "pages/myTraces/myTraces",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "我的轨迹",
+                "enablePullDownRefresh": true,
+				"app-plus": {
+						"pullToRefresh": {
+							"style": "circle",
+							"color": "#037CD5"
+						}
+				}
+            }
+			
+			
+            
+        }
+        ,{
+            "path" : "pages/UserInfo/UserInfo",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "用户信息",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/user/user",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "个人中心",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+       
+        ,{
+            "path" : "pages/changePsd/changePsd",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "修改密码",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/updatePhoneType/updatePhoneType",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "设备更新",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/secondaryPage/addNewTrack/addNewTrack",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        
+        ,{
+            "path" : "pages/heatmap/heatmap",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+     
+        ,{
+            "path" : "pages/Jingdu/Jingdu",
+            "style" :
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+
+        }
+        ,{
+            "path" : "pages/trackDetail/trackDetail",
+            "style" :
+            {
+                "navigationBarTitleText": "轨迹详情",
+                "enablePullDownRefresh": false
+            }
+
+        }
+    ],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "个人轨迹管理系统",
+		"navigationBarBackgroundColor": "#037CD5",
+		"backgroundColor": "#F8F8F8",
+		"navigationStyle":"custom",
+				"app-plus":{
+					"titleView":false
+				}
+	},
+	"uniIdRouter": {},
+	"tabBar":{
+		"color":"#aaa",
+		"selectedColor":"#037CD5",
+		"backgroundColor":"#ffffff",
+		"borderStyle":"black",
+		"list":[
+			{
+				"text":"点拾取",
+				"pagePath": "pages/map/map",
+				"iconPath":"static/tabBar/collectpoint.png",
+				"selectedIconPath": "static/tabBar/collectpointse.png"
+			},
+			{
+				"text":"轨迹分析管理",
+				"pagePath": "pages/myTraces/myTraces",
+				"iconPath": "static/tabBar/analysis.png",
+				"selectedIconPath": "static/tabBar/analysisse.png"	
+			},
+			{
+				"text":"个人中心",
+				"pagePath": "pages/user/user",
+				"iconPath": "static/tabBar/user.png",
+				"selectedIconPath": "static/tabBar/userse.png"	
+			}
+		]
+	}
+}
