@@ -464,35 +464,35 @@ jobs:
 ## 应用截图展示
 
 ### 登录页面
-![登录页面](screenshots/login.png)
+<img src="screenshots/login.png" width="300" alt="登录页面">
 - 用户登录界面
 - 支持用户名密码登录
 
 ### 地图采集页面
-![地图采集](screenshots/map-collect.png)
+<img src="screenshots/map-collect.png" width="300" alt="地图采集">
 - 实时位置显示
 - 轨迹点采集功能
 - 地图可视化
 
 ### 轨迹管理页面
-![轨迹管理](screenshots/track-management.png)
+<img src="screenshots/track-management.png" width="300" alt="轨迹管理">
 - 个人轨迹列表
 - 轨迹搜索和筛选
 - 日期范围查询
 
 ### 轨迹详情页面
-![轨迹详情](screenshots/track-detail.png)
+<img src="screenshots/track-detail.png" width="300" alt="轨迹详情">
 - 轨迹详细信息
 - 轨迹点数据展示
 - 统计信息
 
 ### 热力图展示
-![热力图](screenshots/heatmap.png)
+<img src="screenshots/heatmap.png" width="300" alt="热力图">
 - 轨迹点密度热力图
 - 活动热点区域可视化
 
 ### 个人中心
-![个人中心](screenshots/user-profile.png)
+<img src="screenshots/user-profile.png" width="300" alt="个人中心">
 - 用户信息管理
 - 设备信息配置
 
