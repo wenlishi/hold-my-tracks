@@ -1,5 +1,7 @@
 package com.track.controller;
 
+import com.track.annotation.LogOperation;
+import com.track.annotation.RequirePermission;
 import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
 import com.track.entity.Track;
@@ -34,6 +36,7 @@ public class TrackController {
     private TrackExportService trackExportService;
 
     @PostMapping
+    @LogOperation(operation = "创建轨迹", logParams = true)
     public ResponseEntity<?> createTrack(@RequestBody Track track, Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
@@ -53,6 +56,7 @@ public class TrackController {
     }
 
     @GetMapping
+    @LogOperation(operation = "查询用户轨迹列表")
     public ResponseEntity<?> getUserTracks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -73,37 +77,29 @@ public class TrackController {
     }
 
     @GetMapping("/{id}")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
     public ResponseEntity<Track> getTrack(@PathVariable Long id, Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Track track = trackService.findByIdAndUserId(id, userPrincipal.getId());
-        if (track == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // 权限验证已通过AOP处理，直接查询数据
+        Track track = trackService.getById(id);
         return ResponseEntity.ok(track);
     }
 
     @PutMapping("/{id}")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "write")
+    @LogOperation(operation = "更新轨迹", resourceId = "#id", logParams = true)
     public ResponseEntity<Track> updateTrack(@PathVariable Long id, @RequestBody Track track, Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Track existingTrack = trackService.findByIdAndUserId(id, userPrincipal.getId());
-        if (existingTrack == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+        // 权限验证已通过AOP处理
         track.setId(id);
-        track.setUserId(userPrincipal.getId());
         trackService.updateById(track);
         return ResponseEntity.ok(track);
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "delete")
+    @LogOperation(operation = "删除轨迹", resourceId = "#id")
     public ResponseEntity<?> deleteTrack(@PathVariable Long id, Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Track track = trackService.findByIdAndUserId(id, userPrincipal.getId());
-        if (track == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+        // 权限验证已通过AOP处理
         try {
             trackService.removeTrackWithPoints(id);
             return ResponseEntity.ok().build();
@@ -119,13 +115,17 @@ public class TrackController {
      * 获取轨迹详情，包含轨迹点和统计信息
      */
     @GetMapping("/{id}/detail")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
     public ResponseEntity<?> getTrackDetail(@PathVariable Long id, Authentication authentication) {
+        // 1. 获取当前用户 ID
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        TrackDetail trackDetail = trackService.getTrackDetail(id, userPrincipal.getId());
+        Long userId = userPrincipal.getId();
 
-        if (trackDetail == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // 2. 调用 Service (传入 trackId 和 userId)
+        // Service 内部会执行: SELECT ... FROM tracks WHERE id=? AND user_id=?
+        // 如果查不到或无权访问，Service 会直接抛出异常
+        TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
 
         return ResponseEntity.ok(trackDetail);
     }
@@ -134,6 +134,7 @@ public class TrackController {
      * 搜索轨迹（支持关键字和日期范围查询）
      */
     @GetMapping("/search")
+    @LogOperation(operation = "搜索轨迹", logParams = true)
     public ResponseEntity<?> searchTracks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -155,25 +156,30 @@ public class TrackController {
      * 导出轨迹
      */
     @GetMapping("/{id}/export/{format}")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    @LogOperation(operation = "导出轨迹", resourceId = "#id")
     public ResponseEntity<byte[]> exportTrack(
             @PathVariable Long id,
             @PathVariable String format,
             Authentication authentication) {
 
+        // 1. 获取当前用户 ID
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        TrackDetail trackDetail = trackService.getTrackDetail(id, userPrincipal.getId());
+        Long userId = userPrincipal.getId();
 
-        if (trackDetail == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // 2. 调用 Service (传入 trackId 和 userId)
+        // 这一步会执行: SELECT ... FROM tracks WHERE id=? AND user_id=?
+        // 如果查不到或无权访问，Service 会直接抛出 RuntimeException，被全局异常处理器捕获
+        TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
 
         try {
             byte[] fileContent;
             String fileName;
             String contentType;
 
+            // 这里的逻辑保持不变，因为 trackDetail 已经安全获取到了
             String trackName = trackDetail.getTrack().getTrackName() != null ?
-                              trackDetail.getTrack().getTrackName() : "轨迹";
+                    trackDetail.getTrack().getTrackName() : "轨迹";
 
             switch (format.toLowerCase()) {
                 case "gpx":
@@ -206,18 +212,15 @@ public class TrackController {
             // 处理中文文件名编码问题
             String encodedFileName;
             try {
-                // 使用RFC 5987编码处理中文文件名
                 encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
                         .replaceAll("\\+", "%20");
-                // 设置Content-Disposition头，使用filename*参数支持UTF-8编码
                 String contentDisposition = String.format(
                         "attachment; filename=\"%s\"; filename*=UTF-8''%s",
-                        fileName.replaceAll("\"", "\\\""), // 转义双引号
+                        fileName.replaceAll("\"", "\\\""),
                         encodedFileName
                 );
                 headers.set("Content-Disposition", contentDisposition);
             } catch (Exception e) {
-                // 如果编码失败，使用原始文件名
                 headers.setContentDispositionFormData("attachment", fileName);
             }
 

@@ -112,28 +112,6 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         }
     }
 
-    @Override
-    public TrackDetail getTrackDetail(Long trackId, Long userId) {
-        // 验证轨迹存在且属于该用户
-        Track track = this.findByIdAndUserId(trackId, userId);
-        if (track == null) {
-            return null;
-        }
-
-        // 获取轨迹点列表
-        List<TrackPoint> trackPoints = trackPointService.findByTrackId(trackId);
-
-        // 创建轨迹详情对象
-        TrackDetail trackDetail = new TrackDetail();
-        trackDetail.setTrack(track);
-        trackDetail.setTrackPoints(trackPoints);
-
-        // 计算统计信息
-        TrackDetail.TrackStats stats = calculateTrackStats(trackPoints);
-        trackDetail.setStats(stats);
-
-        return trackDetail;
-    }
 
     /**
      * 计算轨迹统计信息
@@ -267,5 +245,34 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
             (int) resultPage.getCurrent(),
             (int) resultPage.getSize()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TrackDetail getTrackDetail(Long trackId, Long userId) {
+        // 获取轨迹信息（权限验证已通过AOP处理）
+        Track track = this.getById(trackId);
+        if (track == null) {
+            return null;
+        }
+
+        // 获取轨迹点列表
+        List<TrackPoint> trackPoints = trackPointService.findByTrackId(trackId);
+
+        // 创建轨迹详情对象
+        TrackDetail trackDetail = new TrackDetail();
+        trackDetail.setTrack(track);
+        trackDetail.setTrackPoints(trackPoints);
+
+        // 计算统计信息
+        TrackDetail.TrackStats stats = calculateTrackStats(trackPoints);
+        trackDetail.setStats(stats);
+
+        return trackDetail;
+    }
+
+    @Override
+    public Track getById(Long id) {
+        return trackMapper.selectById(id);
     }
 }

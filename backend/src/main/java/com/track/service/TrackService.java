@@ -42,12 +42,18 @@ public interface TrackService extends IService<Track> {
     boolean removeTrackWithPoints(Long trackId);
 
     /**
-     * 获取轨迹详情，包含轨迹点列表
+     * 获取轨迹详情，包含轨迹点列表（权限验证已通过AOP处理）
      * @param trackId 轨迹ID
-     * @param userId 用户ID
      * @return 轨迹详情对象
      */
     TrackDetail getTrackDetail(Long trackId, Long userId);
+
+    /**
+     * 根据ID获取轨迹（无权限验证，用于注解方式）
+     * @param id 轨迹ID
+     * @return 轨迹对象
+     */
+    Track getById(Long id);
 
     /**
      * 搜索轨迹（支持关键字和日期范围查询）
