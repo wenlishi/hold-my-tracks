@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         logger.warn("参数校验失败: {}", e.getMessage());
         return buildErrorResponse(e.getMessage());
     }
+
+    /**
+     * 场景2：参数格式校验失败 (Spring @Valid 自动触发)
+     * 例如：@NotBlank, @Size
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidException(MethodArgumentNotValidException e) {
         // 1. 日志记录：哪个字段校验失败了？
