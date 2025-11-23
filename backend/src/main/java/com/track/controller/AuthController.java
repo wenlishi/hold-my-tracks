@@ -54,6 +54,8 @@ public class AuthController {
 
         if (userService.existsByUsername(registerRequest.getUsername())) {
             // --- JSON 修正 ---
+            // 1. 统一异常处理：检查用户名是否被占用
+            // aspect中的GlobalExceptionHandler自动捕获异常，并生成标准格式的 400 错误。
             throw new IllegalArgumentException("用户名已经被使用");
             // --- 修正结束 ---
         }
