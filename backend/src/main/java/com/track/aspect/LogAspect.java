@@ -15,7 +15,11 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -138,8 +142,9 @@ public class LogAspect {
         }
     }
 
+
     /**
-     * 获取方法参数
+     * 获取方法参数（已优化：过滤掉框架对象和敏感字段）
      */
     private Map<String, Object> getMethodParameters(ProceedingJoinPoint joinPoint) {
         Map<String, Object> params = new HashMap<>();
@@ -148,9 +153,35 @@ public class LogAspect {
         String[] parameterNames = signature.getParameterNames();
 
         for (int i = 0; i < parameterNames.length; i++) {
-            // 敏感参数不记录（如密码）
+            Object arg = args[i];
+
+            // --- 优化开始：过滤掉不需要记录的参数类型 ---
+            if (arg == null) {
+                params.put(parameterNames[i], null);
+                continue;
+            }
+
+            // 1. 过滤 Spring Security 的 Authentication 对象 (因为外层已经记录了 User)
+            if (arg instanceof Authentication) {
+                continue;
+            }
+            // 2. 过滤 Request / Response 对象 (太大且没用)
+            if (arg instanceof HttpServletRequest || arg instanceof HttpServletResponse) {
+                continue;
+            }
+            // 3. 过滤 @Valid 的校验结果 BindingResult
+            if (arg instanceof BindingResult) {
+                continue;
+            }
+            // 4. 过滤文件上传对象 (二进制文件没法打印)
+            if (arg instanceof MultipartFile || arg instanceof MultipartFile[]) {
+                continue;
+            }
+            // --- 优化结束 ---
+
+            // 5. 敏感参数名脱敏 (如密码)
             if (!parameterNames[i].toLowerCase().contains("password")) {
-                params.put(parameterNames[i], args[i]);
+                params.put(parameterNames[i], arg);
             }
         }
         return params;
