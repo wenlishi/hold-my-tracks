@@ -15,11 +15,25 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * JWT认证入口点。
+ * 实现了AuthenticationEntryPoint接口，用于处理未授权的访问请求。
+ * 当用户尝试访问受保护的资源但未通过认证时，Spring Security会调用此类。
+ */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
+    /**
+     * 处理未授权的访问请求。
+     * 返回401 Unauthorized响应，并包含错误信息的JSON体。
+     * @param request  HTTP请求
+     * @param response HTTP响应
+     * @param authException 认证异常
+     * @throws IOException 如果发生IO异常
+     * @throws ServletException 如果发生Servlet异常
+     */
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {

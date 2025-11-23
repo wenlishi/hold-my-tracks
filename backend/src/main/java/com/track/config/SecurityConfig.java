@@ -21,6 +21,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+/**
+ * Spring Security配置类。
+ * 配置了JWT认证过滤器、密码编码器、CORS设置等。
+ * 使用@EnableWebSecurity启用Web安全性，使用@EnableGlobalMethodSecurity启用方法级别的安全性注解支持。
+ * 定义了SecurityFilterChain Bean，配置HTTP安全性，包括禁用CSRF、设置无状态会话管理、配置公共和受保护的端点等。
+ * 还定义了CORS配置源，允许跨域请求。
+ * 依赖于JwtAuthenticationEntryPoint和JwtAuthenticationTokenFilter来处理未授权访问和JWT令牌认证。
+ * 如果没有这个配置类，Spring Boot将不知道过滤器链和安全设置，从而无法保护应用程序的端点。
+ */
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -58,6 +67,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
