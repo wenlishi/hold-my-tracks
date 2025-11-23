@@ -14,6 +14,7 @@ import java.util.Map;
 /**
  * 全局异常处理器
  * 统一处理参数校验等异常
+ * @RestControllerAdvice 此注解使得它能捕获所有进入 Controller 之后的异常。
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
