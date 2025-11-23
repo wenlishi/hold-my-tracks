@@ -64,6 +64,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
+    // --- 私有公共方法：统一构建 400 错误的返回体 ---
     private ResponseEntity<Map<String, Object>> buildErrorResponse(String message) {
         Map<String, Object> response = new HashMap<>();
         
