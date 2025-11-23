@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.put("error", "Internal Server Error");
-        response.put("message", "系统内部错误");
+        response.put("message", "系统繁忙，请稍后再试"); // 生产环境通常不返回 e.getMessage() 给前端，怕暴露敏感信息
         response.put("timestamp", System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
