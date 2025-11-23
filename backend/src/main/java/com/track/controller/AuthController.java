@@ -16,8 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
+import static java.util.Collections.singletonMap;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -55,17 +54,13 @@ public class AuthController {
 
         if (userService.existsByUsername(registerRequest.getUsername())) {
             // --- JSON 修正 ---
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error: Username is already taken!");
-            return ResponseEntity.badRequest().body(response);
+            throw new IllegalArgumentException("用户名已经被使用");
             // --- 修正结束 ---
         }
 
         if (userService.existsByEmail(registerRequest.getEmail())) {
             // --- JSON 修正 ---
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error: Email is already in use!");
-            return ResponseEntity.badRequest().body(response);
+            throw new IllegalArgumentException("邮箱已被使用");
             // --- 修正结束 ---
         }
 
@@ -79,10 +74,8 @@ public class AuthController {
 
         userService.register(user);
 
-        // --- JSON 修正 ---
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "User registered successfully!");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(singletonMap("message", "用户注册成功"));
+       
         // --- 修正结束 ---
     }
 }
