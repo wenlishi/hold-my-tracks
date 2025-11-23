@@ -49,6 +49,13 @@ public class AuthController {
                 userDetails.getRealName()));
     }
 
+    /**
+     * @RequestBody 负责反序列化（把 JSON 数据，转成 Java 对象）。
+     *
+     * @Valid 校验数据是否合法（规则写在 RegisterRequest 类里面）。
+     * @param registerRequest
+     * @return
+     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
 
