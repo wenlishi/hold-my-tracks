@@ -58,11 +58,28 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         );
     }
 
+    /**
+     * 根据 轨迹ID 和 用户ID 联合查询数据
+     * <p>
+     * 核心目的：不仅是查询数据，更是为了进行【数据归属权验证】。
+     * 如果通过 ID 查到了数据，但 user_id 对不上，也会返回 null，从而防止水平越权。
+     * * @param id 轨迹的主键 ID
+     * @param userId 当前登录用户的 ID
+     * @return 如果找到且属于该用户，返回 Track 对象；否则返回 null
+     */
     @Override
     public Track findByIdAndUserId(Long id, Long userId) {
+        // 1.创建MyBatis-Plus的条件构造器
         QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
+        // 2. 拼接 SQL: WHERE id = ?
+        // 精确匹配资源的主键
         queryWrapper.eq("id", id);
+        // 3. 拼接 SQL: AND user_id = ?
+        // 【关键一步】强制限制只能查询归属于当前 userId 的数据
+        // 如果数据存在但 user_id 不匹配，这里就查不出来
         queryWrapper.eq("user_id", userId);
+        // 4. 执行查询
+        // 最终 SQL: SELECT * FROM track WHERE id = ? AND user_id = ? LIMIT 1
         return trackMapper.selectOne(queryWrapper);
     }
 
