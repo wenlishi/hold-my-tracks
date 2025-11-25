@@ -1,5 +1,6 @@
 package com.track.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -70,24 +71,37 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
     @Override
     public Track findByIdAndUserId(Long id, Long userId) {
         // 1.创建MyBatis-Plus的条件构造器
-        QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
+
+        LambdaQueryWrapper<Track> queryWrapper = new LambdaQueryWrapper<>();
         // 2. 拼接 SQL: WHERE id = ?
         // 精确匹配资源的主键
-        queryWrapper.eq("id", id);
+        queryWrapper.eq(Track::getId, id);
         // 3. 拼接 SQL: AND user_id = ?
         // 【关键一步】强制限制只能查询归属于当前 userId 的数据
         // 如果数据存在但 user_id 不匹配，这里就查不出来
-        queryWrapper.eq("user_id", userId);
+        queryWrapper.eq(Track::getUserId, userId);
         // 4. 执行查询
         // 最终 SQL: SELECT * FROM track WHERE id = ? AND user_id = ? LIMIT 1
         return trackMapper.selectOne(queryWrapper);
     }
 
+    /**
+     * 使用LambdaQueryWrapper的Track::getUserId的写法可以
+     * 把 getter 方法的引用传给框架，让框架反推出数据库字段名，从而避免手写字符串导致的拼写错误。
+     * 这个双冒号 :: 是 Java 8 引入的一个非常重要的语法糖，它的学名叫做 “方法引用” (Method Reference)。
+     * 意思是：不是要现在调用这个方法，而是要把这个方法本身当做一个参数传过去。
+     * 是推荐的写法
+     */
     @Override
     public boolean existsByIdAndUserId(Long id, Long userId) {
-        QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("id", id);
-        queryWrapper.eq("user_id", userId);
+        // 使用 LambdaQueryWrapper 避免硬编码字段名 ("user_id")
+        LambdaQueryWrapper<Track> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // Track::getId -> 自动映射为 SQL 的 id 字段
+        queryWrapper.eq(Track::getId, id);
+        
+        // Track::getUserId -> 自动映射为 SQL 的 user_id 字段
+        queryWrapper.eq(Track::getUserId, userId);
         return trackMapper.selectCount(queryWrapper) > 0;
     }
 
