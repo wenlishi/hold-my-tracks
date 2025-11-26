@@ -81,7 +81,7 @@ export default {
                     }));
 
                     // 设置WebView URL
-                    this.webviewUrl = '/static/html/实例.html';
+                    this.webviewUrl = '/static/html/shili.html';
                     this.showWebview = true;
 
                 } else {
@@ -125,7 +125,7 @@ export default {
                     }));
 
                     // 设置WebView URL
-                    this.webviewUrl = '/static/html/实例.html';
+                    this.webviewUrl = '/static/html/shili.html';
                     this.showWebview = true;
                 } else {
                     throw new Error('没有热力图数据');
