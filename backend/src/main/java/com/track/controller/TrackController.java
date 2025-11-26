@@ -17,8 +17,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -154,75 +156,141 @@ public class TrackController {
 
     /**
      * 导出轨迹
-     */
+    //  */
+    // @GetMapping("/{id}/export/{format}")
+    // @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    // @LogOperation(operation = "导出轨迹", resourceId = "#id")
+    // public ResponseEntity<byte[]> exportTrack(
+    //         @PathVariable Long id,
+    //         @PathVariable String format,
+    //         Authentication authentication) {
+
+    //     // 1. 获取当前用户 ID
+    //     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    //     Long userId = userPrincipal.getId();
+
+    //     // 2. 获取数据 (Service 内部已做权限检查)
+    //     TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
+
+    //     try {
+    //         // 3. 生成文件名 (使用 Service 封装的逻辑，统一管理后缀)
+    //         // 例如：fileName = "夜跑轨迹.gpx"
+    //         String fileName = trackExportService.generateFileName(trackDetail.getTrack(), format);
+
+    //         byte[] fileContent;
+    //         String contentType;
+
+    //         // 4. 生成文件内容 & 确定 Content-Type
+    //         switch (format.toLowerCase()) {
+    //             case "gpx":
+    //                 fileContent = trackExportService.exportToGpx(trackDetail);
+    //                 contentType = "application/gpx+xml";
+    //                 break;
+    //             case "kml":
+    //                 fileContent = trackExportService.exportToKml(trackDetail);
+    //                 contentType = "application/vnd.google-earth.kml+xml";
+    //                 break;
+    //             case "csv":
+    //                 fileContent = trackExportService.exportToCsv(trackDetail);
+    //                 contentType = "text/csv"; // 标准 CSV 类型
+    //                 break;
+    //             case "geojson":
+    //                 fileContent = trackExportService.exportToGeoJson(trackDetail);
+    //                 contentType = "application/geo+json";
+    //                 break;
+    //             default:
+    //                 return ResponseEntity.badRequest().build();
+    //         }
+
+    //         // 5. 设置响应头
+    //         HttpHeaders headers = new HttpHeaders();
+    //         headers.setContentType(MediaType.parseMediaType(contentType));
+
+    //         // 【关键修复】处理文件名编码
+    //         // URLEncoder.encode 会把 "夜跑" 变成 "%E5%A4%9C%E8%B7%91" (纯 ASCII 字符)
+    //         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+    //                 .replaceAll("\\+", "%20"); // 处理空格变加号的问题
+
+    //         // 【核心修改】
+    //         // filename="...": 这里的 ... 必须是 ASCII。为了不报错，我们这里也放编码后的名字
+    //         // filename*=...: 现代浏览器（Chrome/Edge/Firefox）会优先读取这个，并自动解码出中文
+    //         String contentDisposition = "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName;
+            
+    //         headers.set("Content-Disposition", contentDisposition);
+    //         headers.setContentLength(fileContent.length);
+
+    //         return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
+
+    //     } catch (IOException e) {
+    //         // 建议打印日志
+    //         e.printStackTrace();
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    //     }
+    // }
+        // Controller 代码
     @GetMapping("/{id}/export/{format}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "导出轨迹", resourceId = "#id")
-    public ResponseEntity<byte[]> exportTrack(
+    public ResponseEntity<StreamingResponseBody> exportTrack(
             @PathVariable Long id,
             @PathVariable String format,
             Authentication authentication) {
 
-        // 1. 获取当前用户 ID
+        // 1. 获取数据
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Long userId = userPrincipal.getId();
+        TrackDetail trackDetail = trackService.getTrackDetail(id, userPrincipal.getId());
 
-        // 2. 获取数据 (Service 内部已做权限检查)
-        TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
+        // 2. 准备文件名 (例如: "周末夜跑.gpx")
+        String fileName = trackExportService.generateFileName(trackDetail.getTrack(), format);
+
+        // 3. 确定 Content-Type (根据不同格式设置不同的响应类型)
+        String mediaTypeStr;
+        switch (format.toLowerCase()) {
+            case "gpx": mediaTypeStr = "application/gpx+xml"; break;
+            case "kml": mediaTypeStr = "application/vnd.google-earth.kml+xml"; break;
+            case "csv": mediaTypeStr = "text/csv"; break;
+            case "geojson": mediaTypeStr = "application/geo+json"; break;
+            default: return ResponseEntity.badRequest().build();
+        }
+
+        // 4. 设置响应头 (关键：处理中文文件名乱码)
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(mediaTypeStr));
 
         try {
-            // 3. 生成文件名 (使用 Service 封装的逻辑，统一管理后缀)
-            // 例如：fileName = "夜跑轨迹.gpx"
-            String fileName = trackExportService.generateFileName(trackDetail.getTrack(), format);
+            // URL编码处理：解决中文乱码，同时把空格(+)替换为%20
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+                    .replaceAll("\\+", "%20");
+            
+            // 双重设置：filename="..." 兼容旧浏览器，filename*=UTF-8''... 适配新浏览器
+            String contentDisposition = "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName;
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
+            
+        } catch (UnsupportedEncodingException e) {
+            // 理论上 UTF-8 不会报错，但为了严谨捕获一下
+            e.printStackTrace();
+        }
 
-            byte[] fileContent;
-            String contentType;
-
-            // 4. 生成文件内容 & 确定 Content-Type
+        // 5. 定义流式输出 (根据 format 调用不同的 Service 方法)
+        StreamingResponseBody stream = outputStream -> {
+            // 这里根据 format 动态分发
             switch (format.toLowerCase()) {
                 case "gpx":
-                    fileContent = trackExportService.exportToGpx(trackDetail);
-                    contentType = "application/gpx+xml";
+                    trackExportService.exportToGpxStream(trackDetail, outputStream);
                     break;
                 case "kml":
-                    fileContent = trackExportService.exportToKml(trackDetail);
-                    contentType = "application/vnd.google-earth.kml+xml";
+                    trackExportService.exportToKmlStream(trackDetail, outputStream);
                     break;
                 case "csv":
-                    fileContent = trackExportService.exportToCsv(trackDetail);
-                    contentType = "text/csv"; // 标准 CSV 类型
+                    trackExportService.exportToCsvStream(trackDetail, outputStream);
                     break;
                 case "geojson":
-                    fileContent = trackExportService.exportToGeoJson(trackDetail);
-                    contentType = "application/geo+json";
+                    trackExportService.exportToGeoJsonStream(trackDetail, outputStream);
                     break;
-                default:
-                    return ResponseEntity.badRequest().build();
             }
+        };
 
-            // 5. 设置响应头
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(contentType));
-
-            // 【关键修复】处理文件名编码
-            // URLEncoder.encode 会把 "夜跑" 变成 "%E5%A4%9C%E8%B7%91" (纯 ASCII 字符)
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
-                    .replaceAll("\\+", "%20"); // 处理空格变加号的问题
-
-            // 【核心修改】
-            // filename="...": 这里的 ... 必须是 ASCII。为了不报错，我们这里也放编码后的名字
-            // filename*=...: 现代浏览器（Chrome/Edge/Firefox）会优先读取这个，并自动解码出中文
-            String contentDisposition = "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName;
-            
-            headers.set("Content-Disposition", contentDisposition);
-            headers.setContentLength(fileContent.length);
-
-            return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
-
-        } catch (IOException e) {
-            // 建议打印日志
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return new ResponseEntity<>(stream, headers, HttpStatus.OK);
     }
+
 }
