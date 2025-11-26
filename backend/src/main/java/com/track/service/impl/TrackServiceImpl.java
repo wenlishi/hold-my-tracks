@@ -24,8 +24,9 @@ import java.util.List;
 @Service
 public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements TrackService {
 
-    @Autowired
-    private TrackMapper trackMapper;
+    // 这里无需注入一个trackMpper，因为继承的ServiceImpl类中已经有注入一个TrackMapper类的baseMapper，可以直接使用
+    // @Autowired
+    // private TrackMapper trackMapper;
 
     @Autowired
     private TrackPointService trackPointService;
@@ -35,7 +36,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId);
         queryWrapper.orderByDesc("create_time");
-        return trackMapper.selectList(queryWrapper);
+        return baseMapper.selectList(queryWrapper);
     }
 
     @Override
@@ -48,7 +49,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         Page<Track> trackPage = new Page<>(page, pageSize);
 
         // 执行分页查询
-        Page<Track> resultPage = trackMapper.selectPage(trackPage, queryWrapper);
+        Page<Track> resultPage = baseMapper.selectPage(trackPage, queryWrapper);
 
         // 构建分页响应
         return new PageResponse<>(
@@ -82,7 +83,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         queryWrapper.eq(Track::getUserId, userId);
         // 4. 执行查询
         // 最终 SQL: SELECT * FROM track WHERE id = ? AND user_id = ? LIMIT 1
-        return trackMapper.selectOne(queryWrapper);
+        return baseMapper.selectOne(queryWrapper);
     }
 
     /**
@@ -102,7 +103,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         
         // Track::getUserId -> 自动映射为 SQL 的 user_id 字段
         queryWrapper.eq(Track::getUserId, userId);
-        return trackMapper.selectCount(queryWrapper) > 0;
+        return baseMapper.selectCount(queryWrapper) > 0;
     }
 
     @Override
@@ -124,7 +125,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         QueryWrapper<Track> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId);
         queryWrapper.eq("status", 1); // 状态为1表示进行中
-        return trackMapper.selectCount(queryWrapper) > 0;
+        return baseMapper.selectCount(queryWrapper) > 0;
     }
 
     @Override
@@ -267,7 +268,7 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         Page<Track> trackPage = new Page<>(page, pageSize);
 
         // 执行分页查询
-        Page<Track> resultPage = trackMapper.selectPage(trackPage, queryWrapper);
+        Page<Track> resultPage = baseMapper.selectPage(trackPage, queryWrapper);
 
         // 构建分页响应
         return new PageResponse<>(
@@ -304,6 +305,6 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
 
     @Override
     public Track getById(Long id) {
-        return trackMapper.selectById(id);
+        return baseMapper.selectById(id);
     }
 }
