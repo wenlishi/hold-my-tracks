@@ -167,68 +167,61 @@ public class TrackController {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
 
-        // 2. 调用 Service (传入 trackId 和 userId)
-        // 这一步会执行: SELECT ... FROM tracks WHERE id=? AND user_id=?
-        // 如果查不到或无权访问，Service 会直接抛出 RuntimeException，被全局异常处理器捕获
+        // 2. 获取数据 (Service 内部已做权限检查)
         TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
 
         try {
+            // 3. 生成文件名 (使用 Service 封装的逻辑，统一管理后缀)
+            // 例如：fileName = "夜跑轨迹.gpx"
+            String fileName = trackExportService.generateFileName(trackDetail.getTrack(), format);
+
             byte[] fileContent;
-            String fileName;
             String contentType;
 
-            // 这里的逻辑保持不变，因为 trackDetail 已经安全获取到了
-            String trackName = trackDetail.getTrack().getTrackName() != null ?
-                    trackDetail.getTrack().getTrackName() : "轨迹";
-
+            // 4. 生成文件内容 & 确定 Content-Type
             switch (format.toLowerCase()) {
                 case "gpx":
                     fileContent = trackExportService.exportToGpx(trackDetail);
-                    fileName = trackName + ".gpx";
                     contentType = "application/gpx+xml";
                     break;
                 case "kml":
                     fileContent = trackExportService.exportToKml(trackDetail);
-                    fileName = trackName + ".kml";
                     contentType = "application/vnd.google-earth.kml+xml";
                     break;
                 case "csv":
                     fileContent = trackExportService.exportToCsv(trackDetail);
-                    fileName = trackName + ".csv";
-                    contentType = "text/csv";
+                    contentType = "text/csv"; // 标准 CSV 类型
                     break;
                 case "geojson":
                     fileContent = trackExportService.exportToGeoJson(trackDetail);
-                    fileName = trackName + ".geojson";
                     contentType = "application/geo+json";
                     break;
                 default:
                     return ResponseEntity.badRequest().build();
             }
 
+            // 5. 设置响应头
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(contentType));
 
-            // 处理中文文件名编码问题
-            String encodedFileName;
-            try {
-                encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
-                        .replaceAll("\\+", "%20");
-                String contentDisposition = String.format(
-                        "attachment; filename=\"%s\"; filename*=UTF-8''%s",
-                        fileName.replaceAll("\"", "\\\""),
-                        encodedFileName
-                );
-                headers.set("Content-Disposition", contentDisposition);
-            } catch (Exception e) {
-                headers.setContentDispositionFormData("attachment", fileName);
-            }
+            // 【关键修复】处理文件名编码
+            // URLEncoder.encode 会把 "夜跑" 变成 "%E5%A4%9C%E8%B7%91" (纯 ASCII 字符)
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+                    .replaceAll("\\+", "%20"); // 处理空格变加号的问题
 
+            // 【核心修改】
+            // filename="...": 这里的 ... 必须是 ASCII。为了不报错，我们这里也放编码后的名字
+            // filename*=...: 现代浏览器（Chrome/Edge/Firefox）会优先读取这个，并自动解码出中文
+            String contentDisposition = "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName;
+            
+            headers.set("Content-Disposition", contentDisposition);
             headers.setContentLength(fileContent.length);
 
             return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
 
         } catch (IOException e) {
+            // 建议打印日志
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
