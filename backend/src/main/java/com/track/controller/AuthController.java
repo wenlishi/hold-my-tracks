@@ -1,5 +1,6 @@
 package com.track.controller;
 
+import com.track.common.Result;
 import com.track.dto.JwtResponse;
 import com.track.dto.LoginRequest;
 import com.track.dto.RegisterRequest;
@@ -7,6 +8,9 @@ import com.track.entity.User;
 import com.track.security.UserPrincipal;
 import com.track.service.UserService;
 import com.track.util.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,8 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import static java.util.Collections.singletonMap;
 
+@Tag(name = "认证管理")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -31,8 +35,9 @@ public class AuthController {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Operation(summary = "用户登录", description = "使用用户名和密码进行登录认证")
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Result<JwtResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -42,35 +47,32 @@ public class AuthController {
 
         UserPrincipal userDetails = (UserPrincipal) authentication.getPrincipal();
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
+        JwtResponse jwtResponse = new JwtResponse(jwt,
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
-                userDetails.getRealName()));
+                userDetails.getRealName());
+
+        return ResponseEntity.ok(Result.success(jwtResponse));
     }
 
     /**
-     * @RequestBody 负责反序列化（把 JSON 数据，转成 Java 对象）。
-     *
-     * @Valid 校验数据是否合法（规则写在 RegisterRequest 类里面）。
-     * @param registerRequest
-     * @return
-     */
+       58 -       * @RequestBody 负责反序列化（把 JSON 数据，转成 Java 对象）。
+       59 -       *
+       60 -       * @Valid 校验数据是否合法（规则写在 RegisterRequest 类里面）。
+       61 -       * @param registerRequest
+       62 -       * @return
+       63 -       */
+    @Operation(summary = "用户注册", description = "注册新用户账号")
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<Result<String>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
 
         if (userService.existsByUsername(registerRequest.getUsername())) {
-            // --- JSON 修正 ---
-            // 1. 统一异常处理：检查用户名是否被占用
-            // aspect中的GlobalExceptionHandler自动捕获异常，并生成标准格式的 400 错误。
             throw new IllegalArgumentException("用户名已经被使用");
-            // --- 修正结束 ---
         }
 
         if (userService.existsByEmail(registerRequest.getEmail())) {
-            // --- JSON 修正 ---
             throw new IllegalArgumentException("邮箱已被使用");
-            // --- 修正结束 ---
         }
 
         // Create new user's account
@@ -83,8 +85,6 @@ public class AuthController {
 
         userService.register(user);
 
-        return ResponseEntity.ok(singletonMap("message", "用户注册成功"));
-       
-        // --- 修正结束 ---
+        return ResponseEntity.ok(Result.success("用户注册成功"));
     }
 }

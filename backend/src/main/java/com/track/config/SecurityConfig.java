@@ -35,6 +35,13 @@ import java.util.Arrays;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    // 1. 定义 SpringDoc/Swagger 的路径白名单
+    private static final String[] SWAGGER_WHITELIST = {
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html"
+    };
+
     @Autowired
     private JwtAuthenticationEntryPoint unauthorizedHandler;
 
@@ -56,12 +63,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()
-                .antMatchers("/api/public/**").permitAll()
-                .anyRequest().authenticated();
+            .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+            .authorizeRequests()
+            
+            // 1. 现有公开访问路径
+            .antMatchers("/api/auth/**").permitAll()
+            .antMatchers("/api/public/**").permitAll()
+            
+            // 2. ⚡️ 添加 SpringDoc/Swagger 路径到白名单
+            // 注意：这里使用 SWAGGER_WHITELIST 数组进行配置
+            .antMatchers(SWAGGER_WHITELIST).permitAll() // <-- 新增的放行规则
+            
+            // 3. 其他所有请求需要身份验证
+            .anyRequest().authenticated();
 
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 

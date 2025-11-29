@@ -1,5 +1,7 @@
 package com.track.aspect;
 
+import com.track.common.Result;
+import com.track.common.ResultCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -8,9 +10,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 全局异常处理器
@@ -27,15 +26,15 @@ public class GlobalExceptionHandler {
      * 例如：用户名已存在、邮箱已被占用
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationException(IllegalArgumentException e) {
+    public ResponseEntity<Result<Object>> handleValidationException(IllegalArgumentException e) {
         logger.warn("参数校验失败: {}", e.getMessage());
-        return buildErrorResponse(e.getMessage());
+        return ResponseEntity.badRequest().body(Result.validateFailed(e.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentialsException(BadCredentialsException e) {
+    public ResponseEntity<Result<Object>> handleBadCredentialsException(BadCredentialsException e) {
         logger.warn( "登录失败：{}", e.getMessage());
-        return buildErrorResponse(e.getMessage());
+        return ResponseEntity.badRequest().body(Result.failed("用户名或密码错误"));
     }
 
     /**
@@ -43,7 +42,7 @@ public class GlobalExceptionHandler {
      * 例如：@NotBlank, @Size
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<Result<Object>> handleValidException(MethodArgumentNotValidException e) {
         // 1. 日志记录：哪个字段校验失败了？
         logger.warn("参数格式校验失败: {}", e.getMessage());
         // 2. 提取错误信息
@@ -53,10 +52,10 @@ public class GlobalExceptionHandler {
         org.springframework.validation.FieldError fieldError = e.getBindingResult().getFieldError();
         if (fieldError != null) {
             // 这就是你在 DTO 里写的 message，例如：@NotBlank(message = "用户名不能为空")
-            errorMessage = fieldError.getDefaultMessage(); 
+            errorMessage = fieldError.getDefaultMessage();
         }
         // 3. 返回错误信息
-        return buildErrorResponse(errorMessage);
+        return ResponseEntity.badRequest().body(Result.validateFailed(errorMessage));
 
     }
 
@@ -64,28 +63,13 @@ public class GlobalExceptionHandler {
      * 处理其他异常
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception e) {
+    public ResponseEntity<Result<Object>> handleGeneralException(Exception e) {
         logger.error("捕获到未知异常，类型是: {}", e.getClass().getName());
         logger.error("异常信息: {}", e.getMessage(), e);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", "Internal Server Error");
-        response.put("message", "系统繁忙，请稍后再试"); // 生产环境通常不返回 e.getMessage() 给前端，怕暴露敏感信息
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
-    // --- 私有公共方法：统一构建 400 错误的返回体 ---
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(String message) {
-        Map<String, Object> response = new HashMap<>();
-        
-        response.put("message", message);
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", "Bad Request");
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.badRequest().body(response);
+        // 生产环境通常不返回 e.getMessage() 给前端，怕暴露敏感信息
+        String errorMessage = "系统繁忙，请稍后再试";
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.failed(ResultCode.INTERNAL_SERVER_ERROR.getCode(), errorMessage));
     }
 }

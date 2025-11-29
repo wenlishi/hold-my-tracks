@@ -2,12 +2,16 @@ package com.track.controller;
 
 import com.track.annotation.LogOperation;
 import com.track.annotation.RequirePermission;
+import com.track.common.Result;
 import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
 import com.track.entity.Track;
 import com.track.security.UserPrincipal;
 import com.track.service.TrackExportService;
 import com.track.service.TrackService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "轨迹管理")
 @RestController
 @RequestMapping("/api/tracks")
 public class TrackController {
@@ -39,27 +44,24 @@ public class TrackController {
 
     @PostMapping
     @LogOperation(operation = "创建轨迹", logParams = true)
-    public ResponseEntity<?> createTrack(@RequestBody Track track, Authentication authentication) {
+    public ResponseEntity<Result<Track>> createTrack(@RequestBody Track track, Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
 
         // 检查用户是否有进行中的轨迹
         if (trackService.hasActiveTrack(userId)) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "用户已有进行中的轨迹任务，请先完成或结束当前轨迹后再创建新轨迹");
-            errorResponse.put("code", "ACTIVE_TRACK_EXISTS");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            throw new IllegalArgumentException("用户已有进行中的轨迹任务，请先完成或结束当前轨迹后再创建新轨迹");
         }
 
         track.setUserId(userId);
         track.setStatus(1); // 进行中
         trackService.save(track);
-        return ResponseEntity.ok(track);
+        return ResponseEntity.ok(Result.success(track));
     }
 
     @GetMapping
     @LogOperation(operation = "查询用户轨迹列表")
-    public ResponseEntity<?> getUserTracks(
+    public ResponseEntity<Result<Object>> getUserTracks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             Authentication authentication) {
@@ -69,47 +71,44 @@ public class TrackController {
         // 如果page和pageSize都是默认值，返回所有数据（兼容旧版本）
         if (page == 1 && pageSize == 10) {
             List<Track> tracks = trackService.findByUserId(userPrincipal.getId());
-            return ResponseEntity.ok(tracks);
+            return ResponseEntity.ok(Result.success(tracks));
         }
 
         // 使用分页查询
         PageResponse<Track> pageResponse = trackService.findByUserIdWithPagination(
             userPrincipal.getId(), page, pageSize);
-        return ResponseEntity.ok(pageResponse);
+        return ResponseEntity.ok(Result.success(pageResponse));
     }
 
     @GetMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
-    public ResponseEntity<Track> getTrack(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<Track>> getTrack(@PathVariable Long id, Authentication authentication) {
         // 权限验证已通过AOP处理，直接查询数据
         Track track = trackService.getById(id);
-        return ResponseEntity.ok(track);
+        return ResponseEntity.ok(Result.success(track));
     }
 
     @PutMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "write")
     @LogOperation(operation = "更新轨迹", resourceId = "#id", logParams = true)
-    public ResponseEntity<Track> updateTrack(@PathVariable Long id, @RequestBody Track track, Authentication authentication) {
+    public ResponseEntity<Result<Track>> updateTrack(@PathVariable Long id, @RequestBody Track track, Authentication authentication) {
         // 权限验证已通过AOP处理
         track.setId(id);
         trackService.updateById(track);
-        return ResponseEntity.ok(track);
+        return ResponseEntity.ok(Result.success(track));
     }
 
     @DeleteMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "delete")
     @LogOperation(operation = "删除轨迹", resourceId = "#id")
-    public ResponseEntity<?> deleteTrack(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<String>> deleteTrack(@PathVariable Long id, Authentication authentication) {
         // 权限验证已通过AOP处理
         try {
             trackService.removeTrackWithPoints(id);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Result.success("轨迹删除成功"));
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "删除轨迹失败: " + e.getMessage());
-            errorResponse.put("code", "DELETE_TRACK_FAILED");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            throw new IllegalArgumentException("删除轨迹失败: " + e.getMessage());
         }
     }
 
@@ -119,7 +118,7 @@ public class TrackController {
     @GetMapping("/{id}/detail")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
-    public ResponseEntity<?> getTrackDetail(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<TrackDetail>> getTrackDetail(@PathVariable Long id, Authentication authentication) {
         // 1. 获取当前用户 ID
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
@@ -129,7 +128,7 @@ public class TrackController {
         // 如果查不到或无权访问，Service 会直接抛出异常
         TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
 
-        return ResponseEntity.ok(trackDetail);
+        return ResponseEntity.ok(Result.success(trackDetail));
     }
 
     /**
@@ -137,7 +136,7 @@ public class TrackController {
      */
     @GetMapping("/search")
     @LogOperation(operation = "搜索轨迹", logParams = true)
-    public ResponseEntity<?> searchTracks(
+    public ResponseEntity<Result<PageResponse<Track>>> searchTracks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String keyword,
@@ -151,7 +150,7 @@ public class TrackController {
         PageResponse<Track> pageResponse = trackService.searchTracks(
             userPrincipal.getId(), keyword, startDate, endDate, page, pageSize);
 
-        return ResponseEntity.ok(pageResponse);
+        return ResponseEntity.ok(Result.success(pageResponse));
     }
 
     /**

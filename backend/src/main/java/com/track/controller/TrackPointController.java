@@ -1,5 +1,6 @@
 package com.track.controller;
 
+import com.track.common.Result;
 import com.track.entity.TrackPoint;
 import com.track.security.UserPrincipal;
 import com.track.service.TrackPointService;
@@ -22,12 +23,12 @@ public class TrackPointController {
     private TrackService trackService;
 
     @PostMapping
-    public ResponseEntity<TrackPoint> addTrackPoint(@PathVariable Long trackId, @RequestBody TrackPoint trackPoint, Authentication authentication) {
+    public ResponseEntity<Result<TrackPoint>> addTrackPoint(@PathVariable Long trackId, @RequestBody TrackPoint trackPoint, Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         // 验证轨迹属于当前用户
         if (!trackService.existsByIdAndUserId(trackId, userPrincipal.getId())) {
-            return ResponseEntity.notFound().build();
+            throw new IllegalArgumentException("轨迹不存在或无权限");
         }
 
         trackPoint.setTrackId(trackId);
@@ -36,19 +37,19 @@ public class TrackPointController {
         // 更新轨迹的总点数
         trackService.updateTotalPoints(trackId);
 
-        return ResponseEntity.ok(trackPoint);
+        return ResponseEntity.ok(Result.success(trackPoint));
     }
 
     @GetMapping
-    public ResponseEntity<List<TrackPoint>> getTrackPoints(@PathVariable Long trackId, Authentication authentication) {
+    public ResponseEntity<Result<List<TrackPoint>>> getTrackPoints(@PathVariable Long trackId, Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         // 验证轨迹属于当前用户
         if (!trackService.existsByIdAndUserId(trackId, userPrincipal.getId())) {
-            return ResponseEntity.notFound().build();
+            throw new IllegalArgumentException("轨迹不存在或无权限");
         }
 
         List<TrackPoint> points = trackPointService.findByTrackId(trackId);
-        return ResponseEntity.ok(points);
+        return ResponseEntity.ok(Result.success(points));
     }
 }
