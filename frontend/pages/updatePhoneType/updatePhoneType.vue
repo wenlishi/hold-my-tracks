@@ -91,30 +91,23 @@
 				this.username = user.username
 
 				// 使用新的API调用方式
-				api.userApi.mobileUpdateStaffInfo(this.username, this.systemInfo.model)
+				api.userApi.updateDeviceInfo({ deviceModel: this.systemInfo.model })
 					.then(res => {
 						console.log("更新设备信息成功:", res);
-						if (res.msg == "修改成功") {
-							uni.showToast({
-								title: "登录设备信息更新成功",
-								position: 'center',
-								icon: 'none'
-							})
-						} else {
-							uni.showToast({
-								title: "出错了，更新失败",
-								icon: 'none',
-								position: 'center'
-							})
-						}
+						uni.showToast({
+							title: "登录设备信息更新成功",
+							position: 'center',
+							icon: 'none'
+						})
 					})
 					.catch(err => {
-						console.error('更新设备信息失败:', err);
+						console.error("更新设备信息失败:", err);
 						uni.showToast({
-							title: '网络请求失败',
-							icon: 'none'
-						});
-					});
+							title: "出错了，更新失败",
+							icon: 'none',
+							position: 'center'
+						})
+					})
 			})
 		}
 	}

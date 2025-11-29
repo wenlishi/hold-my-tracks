@@ -105,11 +105,17 @@
 						// try{ ... }catch(e){ ... }
 			            
 			            // 5. 【正确】使用 api.mobileRequest
-						api.userApi.mobileGetStaffInfo(this.username)
+						api.userApi.getUserInfo()
 						    .then(res => {
 						        console.log("获取用户信息成功:", res);
 
-						        that.userinfo = res; // 'res' 直接就是 userinfo 对象
+						        // 适配新的用户信息格式
+						        that.userinfo = {
+						            Account: res.username || '',
+						            Name: res.realName || res.username || '',
+						            Phone: res.phone || '',
+						            PhoneType: res.phoneType || '未知设备'
+						        };
 						        uni.setStorageSync("userinfo", that.userinfo);
 
 						        var userinfo = uni.getStorageSync("userinfo");

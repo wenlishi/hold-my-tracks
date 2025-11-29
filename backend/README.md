@@ -32,7 +32,6 @@ backend/
 │   │   └── SecurityConfig.java
 │   ├── controller/     # 控制器
 │   │   ├── AuthController.java
-│   │   ├── MobileController.java
 │   │   ├── TrackController.java
 │   │   └── TrackPointController.java
 │   ├── dto/           # 数据传输对象

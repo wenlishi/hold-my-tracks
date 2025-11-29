@@ -53,7 +53,6 @@ mvn spring-boot:run
 │   │   │   └── SecurityConfig.java
 │   │   ├── controller/           # 控制器
 │   │   │   ├── AuthController.java
-│   │   │   ├── MobileController.java
 │   │   │   ├── TrackController.java
 │   │   │   └── TrackPointController.java
 │   │   ├── dto/                  # 数据传输对象
@@ -522,56 +521,6 @@ private String email;
 - **认证**: 需要 JWT token
 - **说明**: 获取指定轨迹的所有轨迹点
 
-### 移动端兼容接口 (MobileController)
-
-#### 添加轨迹点（兼容接口）
-- **URL**: `GET /api/addcoordpoint`
-- **认证**: 需要 JWT token
-- **参数**:
-  - `liid`: 轨迹ID
-  - `x`: 经度
-  - `y`: 纬度
-  - `z`: 海拔
-  - `speed` (可选): 速度
-  - `address` (可选): 地址信息
-- **说明**: 兼容前端旧版接口的轨迹点添加
-
-#### 更新轨迹状态（兼容接口）
-- **URL**: `GET /api/updateroute`
-- **认证**: 需要 JWT token
-- **参数**:
-  - `liid`: 轨迹ID
-- **说明**: 将轨迹状态更新为已完成
-
-#### 获取用户信息（兼容接口）
-- **URL**: `GET /api/getstaffinfo`
-- **认证**: 需要 JWT token
-- **参数**:
-  - `username`: 用户名
-- **响应**:
-  ```json
-  {
-    "PhoneType": "设备型号",
-    "Account": "用户名",
-    "Name": "真实姓名",
-    "Phone": "手机号"
-  }
-  ```
-
-#### 更新设备信息（兼容接口）
-- **URL**: `GET /api/updatestaffinfo`
-- **认证**: 需要 JWT token
-- **参数**:
-  - `username`: 用户名
-  - `phonetype`: 设备型号
-- **说明**: 更新用户的设备信息
-
-#### 通用API接口
-- **URL**: `GET /api`
-- **认证**: 需要 JWT token
-- **参数**:
-  - `action`: 操作类型，支持 `login`, `addcoordpoint`, `updateroute`, `getstaffinfo`, `updatestaffinfo`, `updatepassword`
-- **说明**: 通用接口，根据action参数执行不同操作
 
 ### 日期查询特性
 - 支持 `yyyy-MM-dd` 格式的日期参数自动转换

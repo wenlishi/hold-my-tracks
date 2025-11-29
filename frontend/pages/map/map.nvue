@@ -113,7 +113,7 @@
 			<image class="addimage" @click="gotoAddNewTrack()" src="../../static/collectPoint/addNewTrack.png" mode="aspectFill"></image>
 		</view>
 		<view class="locating">
-			<image class="locatingimg" @click="getPosition()()" src="../../static/collectPoint/locating.png" mode="aspectFill"></image>
+			<image class="locatingimg" @click="getPosition()" src="../../static/collectPoint/locating.png" mode="aspectFill"></image>
 		</view>
 		<view class="pcountbackground">
 
@@ -394,7 +394,10 @@
                 interval: 5
             }
         },
-        onLoad() {},
+        onLoad() {
+            // 页面加载时自动获取当前位置
+            this.getPosition();
+        },
         onReady() {
             this.map = uni.createMapContext("map1", this);
             // 计算屏幕高度 ，宽度
@@ -929,19 +932,27 @@
                 this.type = '';
             },
             addcoordpoint(lineid, x, y, z, speed, address) {
-                // 使用新的API工具类添加轨迹点
+                // 使用标准的RESTful API添加轨迹点
                 const {
                     trackPointApi
                 } = require('@/utils/api.js');
                 // 增加空值保护
                 address = address || "未知位置";
-                
-                trackPointApi.mobileAddPoint(lineid, x, y, z, speed, address)
+
+                // 构建轨迹点数据对象
+                const pointData = {
+                    trackId: lineid,
+                    longitude: parseFloat(x),
+                    latitude: parseFloat(y),
+                    altitude: parseFloat(z),
+                    speed: speed ? parseFloat(speed) : 0,
+                    address: address
+                };
+
+                trackPointApi.addPoint(pointData)
                     .then(res => {
                         console.log('添加轨迹点成功:', res);
-                        if (res.msg === "添加成功") {
-                            this.pointCount += 1;
-                        }
+                        this.pointCount += 1;
                     })
                     .catch(err => {
                         console.error('添加轨迹点失败:', err);
@@ -951,11 +962,12 @@
 
             },
             updateroute(lineid) {
-                // 使用新的API工具类更新轨迹状态
+                // 使用标准的RESTful API更新轨迹状态
                 const {
-                    trackPointApi
+                    trackApi
                 } = require('@/utils/api.js');
-                trackPointApi.updateRoute(lineid)
+                // 将轨迹状态更新为已完成
+                trackApi.updateTrack(lineid, { status: 2 })
                     .then(res => {
                         console.log('更新轨迹成功:', res);
                         uni.showToast({

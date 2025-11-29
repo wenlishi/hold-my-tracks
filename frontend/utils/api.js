@@ -24,23 +24,55 @@ const requestInterceptor = (config) => {
 
 // 响应拦截器
 const responseInterceptor = (response) => {
+  // 处理HTTP状态码
   if (response.statusCode === 200) {
-    return response.data;
+    // 处理新的统一响应格式
+    const result = response.data;
+    if (result && typeof result === 'object') {
+      // 检查是否为成功的响应
+      if (result.success) {
+        return result.data; // 返回实际数据
+      } else {
+        // 业务错误，根据错误码处理
+        const errorMessage = result.message || '请求失败';
+        const errorCode = result.code || 500;
+
+        // 特殊处理401错误码（未登录）
+        if (errorCode === 401) {
+          handleUnauthorized();
+          return Promise.reject(new Error('登录已过期'));
+        }
+
+        // 其他业务错误
+        uni.showToast({
+          title: errorMessage,
+          icon: 'none'
+        });
+        return Promise.reject(new Error(errorMessage));
+      }
+    }
+    return result;
   } else if (response.statusCode === 401) {
-    // Token过期，跳转到登录页
-    uni.removeStorageSync('token');
-    uni.removeStorageSync('user');
-    uni.showToast({
-      title: '登录已过期，请重新登录',
-      icon: 'none'
-    });
-    uni.reLaunch({
-      url: '/pages/login/login'
-    });
+    // HTTP 401 未授权
+    handleUnauthorized();
     return Promise.reject(new Error('登录已过期'));
   } else {
-    return Promise.reject(new Error('网络请求失败'));
+    // 其他HTTP错误
+    return Promise.reject(new Error(`网络请求失败 (${response.statusCode})`));
   }
+};
+
+// 处理未授权情况
+const handleUnauthorized = () => {
+  uni.removeStorageSync('token');
+  uni.removeStorageSync('user');
+  uni.showToast({
+    title: '登录已过期，请重新登录',
+    icon: 'none'
+  });
+  uni.reLaunch({
+    url: '/pages/login/login'
+  });
 };
 
 // 通用请求方法
@@ -75,17 +107,6 @@ const request = (options) => {
   });
 };
 
-// 兼容前端原有接口的请求方法
-const mobileRequest = (action, params = {}) => {
-  const queryString = Object.keys(params)
-    .map(key => `${key}=${encodeURIComponent(params[key])}`)
-    .join('&');
-
-  return request({
-    url: `?action=${action}&${queryString}`,
-    method: 'GET'
-  });
-};
 
 // 认证相关API
 export const authApi = {
@@ -110,10 +131,6 @@ export const authApi = {
     });
   },
 
-  // 兼容前端登录接口
-  mobileLogin: (username, password) => {
-    return mobileRequest('login', { username, password });
-  }
 };
 
 // 轨迹相关API
@@ -220,16 +237,8 @@ export const trackApi = {
             const uint8Array = new Uint8Array(arrayBuffer);
             resolve(uint8Array);
           } else if (res.statusCode === 401) {
-            // Token过期，跳转到登录页
-            uni.removeStorageSync('token');
-            uni.removeStorageSync('user');
-            uni.showToast({
-              title: '登录已过期，请重新登录',
-              icon: 'none'
-            });
-            uni.reLaunch({
-              url: '/pages/login/login'
-            });
+            // HTTP 401 未授权
+            handleUnauthorized();
             reject(new Error('登录已过期'));
           } else {
             reject(new Error('导出失败'));
@@ -267,22 +276,6 @@ export const trackPointApi = {
     });
   },
 
-  // 兼容前端添加轨迹点接口
-  mobileAddPoint: (liid, x, y, z, speed, address) => {
-    return mobileRequest('addcoordpoint', {
-      liid,
-      x,
-      y,
-      z,
-      speed: speed || '',
-      address: address || ''
-    });
-  },
-
-  // 更新轨迹状态
-  updateRoute: (liid) => {
-    return mobileRequest('updateroute', { liid });
-  }
 };
 
 // 热力图相关API
@@ -315,10 +308,6 @@ export const heatmapApi = {
     });
   },
 
-  // 兼容前端热力图数据接口
-  mobileGetHeatmapData: (lineid) => {
-    return mobileRequest('getheatmapdata', { lineid });
-  }
 };
 
 // 用户相关API
@@ -340,25 +329,21 @@ export const userApi = {
     });
   },
 
-  // 兼容前端获取用户信息接口
-  mobileGetStaffInfo: (username) => {
-    return mobileRequest('getstaffinfo', { username });
+  // 更新用户密码
+  updatePassword: (newPassword) => {
+    return request({
+      url: '/users/password',
+      method: 'PUT',
+      data: {
+        newPassword
+      }
+    });
   },
 
-  // 兼容前端更新设备信息接口
-  mobileUpdateStaffInfo: (username, phonetype) => {
-    return mobileRequest('updatestaffinfo', { username, phonetype });
-  },
-
-  // 兼容前端修改密码接口
-  mobileUpdatePassword: (username, newpwd) => {
-    return mobileRequest('updatepassword', { username, newpwd });
-  }
 };
 
 export default {
   request,
-  mobileRequest,
   authApi,
   trackApi,
   trackPointApi,

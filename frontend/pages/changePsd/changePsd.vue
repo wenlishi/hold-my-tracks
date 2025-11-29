@@ -75,16 +75,14 @@
 					var that = this
 
 					// 使用封装的API方法修改密码
-					api.userApi.mobileUpdatePassword(that.username, that.passwordConfirm)
+					api.userApi.updatePassword(that.passwordConfirm)
 						.then(res => {
 							console.log("修改密码成功:", res);
-							if (res.msg == "密码修改成功") {
-								uni.showToast({
-									icon: 'none',
-									position: 'center',
-									title: "密码修改成功"
-								})
-							}
+							uni.showToast({
+								icon: 'none',
+								position: 'center',
+								title: "密码修改成功"
+							})
 						})
 						.catch(err => {
 							console.error('修改密码失败:', err);
