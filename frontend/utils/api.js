@@ -262,7 +262,7 @@ export const trackPointApi = {
   // 添加轨迹点
   addPoint: (pointData) => {
     return request({
-      url: '/track-points',
+      url: `/tracks/${pointData.trackId}/points`,
       method: 'POST',
       data: pointData
     });

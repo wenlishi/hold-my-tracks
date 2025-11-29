@@ -42,6 +42,7 @@ public class TrackController {
     @Autowired
     private TrackExportService trackExportService;
 
+    @Operation(summary = "创建轨迹", description = "创建一条新的轨迹记录")
     @PostMapping
     @LogOperation(operation = "创建轨迹", logParams = true)
     public ResponseEntity<Result<Track>> createTrack(@RequestBody Track track, Authentication authentication) {
@@ -59,11 +60,12 @@ public class TrackController {
         return ResponseEntity.ok(Result.success(track));
     }
 
+    @Operation(summary = "获取用户轨迹列表", description = "获取当前用户的轨迹列表，支持分页查询")
     @GetMapping
     @LogOperation(operation = "查询用户轨迹列表")
     public ResponseEntity<Result<Object>> getUserTracks(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") int pageSize,
             Authentication authentication) {
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -80,29 +82,39 @@ public class TrackController {
         return ResponseEntity.ok(Result.success(pageResponse));
     }
 
+    @Operation(summary = "获取轨迹详情", description = "根据ID获取轨迹的详细信息")
     @GetMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
-    public ResponseEntity<Result<Track>> getTrack(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<Track>> getTrack(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            Authentication authentication) {
         // 权限验证已通过AOP处理，直接查询数据
         Track track = trackService.getById(id);
         return ResponseEntity.ok(Result.success(track));
     }
 
+    @Operation(summary = "更新轨迹", description = "更新指定轨迹的信息")
     @PutMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "write")
     @LogOperation(operation = "更新轨迹", resourceId = "#id", logParams = true)
-    public ResponseEntity<Result<Track>> updateTrack(@PathVariable Long id, @RequestBody Track track, Authentication authentication) {
+    public ResponseEntity<Result<Track>> updateTrack(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            @RequestBody Track track,
+            Authentication authentication) {
         // 权限验证已通过AOP处理
         track.setId(id);
         trackService.updateById(track);
         return ResponseEntity.ok(Result.success(track));
     }
 
+    @Operation(summary = "删除轨迹", description = "删除指定轨迹及其关联的轨迹点数据")
     @DeleteMapping("/{id}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id", operation = "delete")
     @LogOperation(operation = "删除轨迹", resourceId = "#id")
-    public ResponseEntity<Result<String>> deleteTrack(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<String>> deleteTrack(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            Authentication authentication) {
         // 权限验证已通过AOP处理
         try {
             trackService.removeTrackWithPoints(id);
@@ -112,13 +124,13 @@ public class TrackController {
         }
     }
 
-    /**
-     * 获取轨迹详情，包含轨迹点和统计信息
-     */
+    @Operation(summary = "获取轨迹详情", description = "获取轨迹的完整详情，包括轨迹信息和所有轨迹点数据")
     @GetMapping("/{id}/detail")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "查询轨迹详情", resourceId = "#id")
-    public ResponseEntity<Result<TrackDetail>> getTrackDetail(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Result<TrackDetail>> getTrackDetail(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            Authentication authentication) {
         // 1. 获取当前用户 ID
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
@@ -131,17 +143,15 @@ public class TrackController {
         return ResponseEntity.ok(Result.success(trackDetail));
     }
 
-    /**
-     * 搜索轨迹（支持关键字和日期范围查询）
-     */
+    @Operation(summary = "搜索轨迹", description = "根据关键字和日期范围搜索用户的轨迹")
     @GetMapping("/search")
     @LogOperation(operation = "搜索轨迹", logParams = true)
     public ResponseEntity<Result<PageResponse<Track>>> searchTracks(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
+            @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "搜索关键字") @RequestParam(required = false) String keyword,
+            @Parameter(description = "开始日期", example = "2024-01-01") @RequestParam(required = false) LocalDate startDate,
+            @Parameter(description = "结束日期", example = "2024-12-31") @RequestParam(required = false) LocalDate endDate,
             Authentication authentication) {
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -226,13 +236,13 @@ public class TrackController {
     //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     //     }
     // }
-        // Controller 代码
+    @Operation(summary = "导出轨迹", description = "将轨迹数据导出为指定格式的文件（GPX、KML、CSV、GeoJSON）")
     @GetMapping("/{id}/export/{format}")
     @RequirePermission(resourceType = "track", resourceIdParam = "id")
     @LogOperation(operation = "导出轨迹", resourceId = "#id")
     public ResponseEntity<StreamingResponseBody> exportTrack(
-            @PathVariable Long id,
-            @PathVariable String format,
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            @Parameter(description = "导出格式", example = "gpx", schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"gpx", "kml", "csv", "geojson"})) @PathVariable String format,
             Authentication authentication) {
 
         // 1. 获取数据
