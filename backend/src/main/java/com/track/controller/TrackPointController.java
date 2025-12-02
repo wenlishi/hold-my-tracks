@@ -91,6 +91,41 @@ public class TrackPointController {
         return ResponseEntity.ok(Result.success(processedCount));
     }
 
+    @Operation(summary = "获取热力图数据", description = "获取指定轨迹的原始轨迹点数据（用于热力图展示）")
+    @GetMapping("/heatmap")
+    public ResponseEntity<Result<List<TrackPoint>>> getHeatmapPoints(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long trackId,
+            Authentication authentication) {
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+        // 验证轨迹属于当前用户
+        if (!trackService.existsByIdAndUserId(trackId, userPrincipal.getId())) {
+            throw new IllegalArgumentException("轨迹不存在或无权限");
+        }
+
+        // 获取原始轨迹点（用于热力图）
+        List<TrackPoint> points = trackPointService.getRawPointsForHeatmap(trackId);
+        return ResponseEntity.ok(Result.success(points));
+    }
+
+    @Operation(summary = "获取压缩后的轨迹点", description = "获取指定轨迹的压缩后轨迹点数据（用于轨迹展示）")
+    @GetMapping("/compressed")
+    public ResponseEntity<Result<List<TrackPoint>>> getCompressedPoints(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long trackId,
+            @Parameter(description = "压缩容差（米）", example = "10.0") @RequestParam(defaultValue = "10.0") double tolerance,
+            Authentication authentication) {
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+        // 验证轨迹属于当前用户
+        if (!trackService.existsByIdAndUserId(trackId, userPrincipal.getId())) {
+            throw new IllegalArgumentException("轨迹不存在或无权限");
+        }
+
+        // 获取压缩后的轨迹点
+        List<TrackPoint> points = trackPointService.getCompressedPoints(trackId, tolerance);
+        return ResponseEntity.ok(Result.success(points));
+    }
+
     @Operation(summary = "获取轨迹点列表", description = "获取指定轨迹的所有轨迹点列表")
     @GetMapping
     public ResponseEntity<Result<List<TrackPoint>>> getTrackPoints(

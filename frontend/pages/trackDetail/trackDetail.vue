@@ -183,7 +183,8 @@ export default {
                     title: '加载中...'
                 });
 
-                const res = await trackApi.getTrackDetail(this.trackId);
+                // 使用压缩后的轨迹详情，提高地图渲染性能
+                const res = await trackApi.getCompressedTrackDetail(this.trackId, 10.0);
                 this.trackDetail = res;
                 this.initMapData();
 

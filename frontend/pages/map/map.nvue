@@ -391,7 +391,14 @@
                 hasStart: false, //是否开始采点
                 hasStoped: false,
                 collectStatus: "未开始",
-                interval: 5
+                interval: 5,
+
+                // 批量上传相关配置
+                batchUploadEnabled: true, // 是否启用批量上传
+                batchSize: 20, // 批量上传大小
+                batchCache: [], // 轨迹点缓存
+                lastUploadTime: 0, // 上次上传时间
+                uploadInterval: 5000, // 上传间隔（毫秒）
             }
         },
         onLoad() {
@@ -949,17 +956,91 @@
                     address: address
                 };
 
-                trackPointApi.addPoint(pointData)
+                // 批量上传逻辑
+                if (this.batchUploadEnabled) {
+                    // 添加到缓存
+                    this.batchCache.push(pointData);
+                    console.log(`轨迹点已缓存，当前缓存数量: ${this.batchCache.length}`);
+
+                    // 检查是否需要上传
+                    this.checkAndUploadBatch(lineid);
+                } else {
+                    // 单点上传（兼容模式）
+                    trackPointApi.addPoint(pointData)
+                        .then(res => {
+                            console.log('添加轨迹点成功:', res);
+                            this.pointCount += 1;
+                        })
+                        .catch(err => {
+                            console.error('添加轨迹点失败:', err);
+                            // 移除 toast，避免频繁弹窗打扰用户
+                            console.log("添加失败");
+                        });
+                }
+
+            },
+
+            // 检查并执行批量上传
+            checkAndUploadBatch(trackId) {
+                const now = Date.now();
+                const shouldUploadBySize = this.batchCache.length >= this.batchSize;
+                const shouldUploadByTime = now - this.lastUploadTime >= this.uploadInterval && this.batchCache.length > 0;
+
+                if (shouldUploadBySize || shouldUploadByTime) {
+                    this.uploadBatchPoints(trackId);
+                }
+            },
+
+            // 执行批量上传
+            uploadBatchPoints(trackId) {
+                if (this.batchCache.length === 0) {
+                    return;
+                }
+
+                const pointsToUpload = [...this.batchCache];
+                this.batchCache = []; // 清空缓存
+                this.lastUploadTime = Date.now();
+
+                console.log(`开始批量上传 ${pointsToUpload.length} 个轨迹点...`);
+
+                const {
+                    trackPointApi
+                } = require('@/utils/api.js');
+
+                trackPointApi.addPointsBatch(trackId, pointsToUpload)
                     .then(res => {
-                        console.log('添加轨迹点成功:', res);
-                        this.pointCount += 1;
+                        console.log(`批量上传成功，上传了 ${pointsToUpload.length} 个点`);
+                        this.pointCount += pointsToUpload.length;
+
+                        // 显示上传成功提示
+                        uni.showToast({
+                            title: `上传了 ${pointsToUpload.length} 个轨迹点`,
+                            icon: 'success',
+                            duration: 2000
+                        });
                     })
                     .catch(err => {
-                        console.error('添加轨迹点失败:', err);
-                        // 移除 toast，避免频繁弹窗打扰用户
-                        console.log("添加失败");
-                    });
+                        console.error('批量上传失败:', err);
 
+                        // 上传失败，将点重新放回缓存（下次重试）
+                        this.batchCache = [...pointsToUpload, ...this.batchCache];
+                        console.log(`上传失败，已回退 ${pointsToUpload.length} 个点到缓存`);
+
+                        // 显示失败提示
+                        uni.showToast({
+                            title: '上传失败，已保存到本地',
+                            icon: 'none',
+                            duration: 2000
+                        });
+                    });
+            },
+
+            // 强制上传所有缓存点（在结束采集时调用）
+            forceUploadAllPoints(trackId) {
+                if (this.batchCache.length > 0) {
+                    console.log(`强制上传剩余 ${this.batchCache.length} 个缓存点...`);
+                    this.uploadBatchPoints(trackId);
+                }
             },
             updateroute(lineid) {
                 // 使用标准的RESTful API更新轨迹状态

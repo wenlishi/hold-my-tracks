@@ -163,6 +163,24 @@ public class TrackController {
         return ResponseEntity.ok(Result.success(pageResponse));
     }
 
+    @Operation(summary = "获取压缩后的轨迹详情", description = "获取轨迹的完整详情，包含压缩后的轨迹点数据")
+    @GetMapping("/{id}/detail/compressed")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    @LogOperation(operation = "查询压缩轨迹详情", resourceId = "#id")
+    public ResponseEntity<Result<TrackDetail>> getCompressedTrackDetail(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            @Parameter(description = "压缩容差（米）", example = "10.0") @RequestParam(defaultValue = "10.0") double tolerance,
+            Authentication authentication) {
+        // 1. 获取当前用户 ID
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        // 2. 调用 Service (传入 trackId 和 userId)
+        TrackDetail trackDetail = trackService.getCompressedTrackDetail(id, userId, tolerance);
+
+        return ResponseEntity.ok(Result.success(trackDetail));
+    }
+
     /**
      * 导出轨迹
     //  */

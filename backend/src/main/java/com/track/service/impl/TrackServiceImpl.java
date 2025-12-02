@@ -11,6 +11,8 @@ import com.track.entity.TrackPoint;
 import com.track.mapper.TrackMapper;
 import com.track.service.TrackPointService;
 import com.track.service.TrackService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import java.util.List;
 
 @Service
 public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements TrackService {
+
+    private static final Logger log = LoggerFactory.getLogger(TrackServiceImpl.class);
 
     // 这里无需注入一个trackMpper，因为继承的ServiceImpl类中已经有注入一个TrackMapper类的baseMapper，可以直接使用
     // @Autowired
@@ -299,6 +303,37 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         // 计算统计信息
         TrackDetail.TrackStats stats = calculateTrackStats(trackPoints);
         trackDetail.setStats(stats);
+
+        return trackDetail;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TrackDetail getCompressedTrackDetail(Long trackId, Long userId, double tolerance) {
+        // 获取轨迹信息（权限验证已通过AOP处理）
+        Track track = this.getById(trackId);
+        if (track == null) {
+            return null;
+        }
+
+        // 获取原始轨迹点列表（用于统计计算）
+        List<TrackPoint> rawTrackPoints = trackPointService.findByTrackId(trackId);
+
+        // 获取压缩后的轨迹点列表（用于展示）
+        List<TrackPoint> compressedTrackPoints = trackPointService.getCompressedPoints(trackId, tolerance);
+
+        // 创建轨迹详情对象
+        TrackDetail trackDetail = new TrackDetail();
+        trackDetail.setTrack(track);
+        trackDetail.setTrackPoints(compressedTrackPoints); // 使用压缩后的点
+
+        // 计算统计信息（基于原始数据）
+        TrackDetail.TrackStats stats = calculateTrackStats(rawTrackPoints);
+        trackDetail.setStats(stats);
+
+        log.info("轨迹 {} 压缩详情生成完成，原始点数: {}, 压缩后点数: {}, 压缩率: {:.2f}%",
+                trackId, rawTrackPoints.size(), compressedTrackPoints.size(),
+                (1.0 - (double) compressedTrackPoints.size() / rawTrackPoints.size()) * 100);
 
         return trackDetail;
     }

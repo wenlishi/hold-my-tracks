@@ -28,7 +28,7 @@
 </template>
 
 <script>
-const { trackPointApi } = require('@/utils/api.js');
+const { heatmapApi } = require('@/utils/api.js');
 const { convertToHeatmapData } = require('@/utils/heatmapUtils.js');
 
 export default {
@@ -62,8 +62,8 @@ export default {
                 this.showError = false;
                 this.loadingText = '正在加载轨迹点数据...';
 
-                // 使用后端API获取轨迹点数据
-                const trackPoints = await trackPointApi.getTrackPoints(this.trackId);
+                // 使用后端API获取热力图专用数据（原始轨迹点）
+                const trackPoints = await heatmapApi.getTrackHeatmap(this.trackId);
                 console.log('获取到的轨迹点数据:', trackPoints);
 
                 // 检查是否有轨迹点数据

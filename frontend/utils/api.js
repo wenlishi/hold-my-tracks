@@ -209,11 +209,22 @@ export const trackApi = {
     });
   },
 
-  // 获取轨迹详情
+  // 获取轨迹详情（原始数据）
   getTrackDetail: (id) => {
     return request({
       url: `/tracks/${id}/detail`,
       method: 'GET'
+    });
+  },
+
+  // 获取压缩后的轨迹详情
+  getCompressedTrackDetail: (id, tolerance = 10.0) => {
+    return request({
+      url: `/tracks/${id}/detail/compressed`,
+      method: 'GET',
+      data: {
+        tolerance: tolerance
+      }
     });
   },
 
@@ -259,7 +270,7 @@ export const trackApi = {
 
 // 轨迹点相关API
 export const trackPointApi = {
-  // 添加轨迹点
+  // 添加轨迹点（单点）
   addPoint: (pointData) => {
     return request({
       url: `/tracks/${pointData.trackId}/points`,
@@ -268,7 +279,16 @@ export const trackPointApi = {
     });
   },
 
-  // 获取轨迹的轨迹点列表
+  // 批量添加轨迹点（并进行轨迹处理）
+  addPointsBatch: (trackId, points) => {
+    return request({
+      url: `/tracks/${trackId}/points/batch`,
+      method: 'POST',
+      data: points
+    });
+  },
+
+  // 获取轨迹点列表（原始数据）
   getTrackPoints: (trackId) => {
     return request({
       url: `/tracks/${trackId}/points`,
@@ -276,14 +296,32 @@ export const trackPointApi = {
     });
   },
 
+  // 获取压缩后的轨迹点列表（用于轨迹展示）
+  getCompressedPoints: (trackId, tolerance = 10.0) => {
+    return request({
+      url: `/tracks/${trackId}/points/compressed`,
+      method: 'GET',
+      data: {
+        tolerance: tolerance
+      }
+    });
+  },
+
+  // 处理现有轨迹点（进行轨迹处理）
+  processTrackPoints: (trackId) => {
+    return request({
+      url: `/tracks/${trackId}/points/process`,
+      method: 'POST'
+    });
+  },
 };
 
 // 热力图相关API
 export const heatmapApi = {
-  // 获取轨迹热力图数据
+  // 获取轨迹热力图数据（使用原始轨迹点）
   getTrackHeatmap: (trackId) => {
     return request({
-      url: `/tracks/${trackId}/heatmap`,
+      url: `/tracks/${trackId}/points/heatmap`,
       method: 'GET'
     });
   },
