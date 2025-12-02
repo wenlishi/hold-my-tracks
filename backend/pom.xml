@@ -152,7 +152,7 @@
         <dependency>
             <groupId>com.github.wenlishi</groupId>
             <artifactId>trajectory-spring-boot-starter</artifactId>
-            <version>v1.0.0</version>
+            <version>v1.0.1</version>
 	    </dependency>
     </dependencies>
 
