@@ -140,6 +140,13 @@
             <artifactId>springdoc-openapi-security</artifactId>
             <version>1.7.0</version>
         </dependency>
+
+        <!-- Trajectory Processing Starter -->
+        <dependency>
+            <groupId>com.track</groupId>
+            <artifactId>trajectory-processing-starter</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
