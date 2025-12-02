@@ -3,6 +3,7 @@ package com.track.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
+import com.track.dto.TrackSimpleDetail;
 import com.track.entity.Track;
 
 import java.time.LocalDate;
@@ -47,6 +48,13 @@ public interface TrackService extends IService<Track> {
      * @return 轨迹详情对象
      */
     TrackDetail getTrackDetail(Long trackId, Long userId);
+
+    /**
+     * 获取轨迹简化详情，不包含轨迹点列表（权限验证已通过AOP处理）
+     * @param trackId 轨迹ID
+     * @return 轨迹简化详情对象
+     */
+    TrackSimpleDetail getTrackSimpleDetail(Long trackId, Long userId);
 
     /**
      * 获取压缩后的轨迹详情，包含压缩后的轨迹点列表

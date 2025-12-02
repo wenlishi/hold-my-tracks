@@ -67,9 +67,9 @@ public class TrackPointServiceImpl extends ServiceImpl<TrackPointMapper, TrackPo
             // 使用轨迹处理流水线进行处理
             List<Point> processedPoints = trajectoryPipeline.process(points);
 
-            log.info("轨迹处理完成，原始数量: {}, 处理后数量: {}, 压缩率: {:.2f}%",
-                    points.size(), processedPoints.size(),
-                    (1.0 - (double) processedPoints.size() / points.size()) * 100);
+            double compressionRate = (1.0 - (double) processedPoints.size() / points.size()) * 100;
+            log.info("轨迹处理完成，原始数量: {}, 处理后数量: {}, 压缩率: {}%",
+                    points.size(), processedPoints.size(), String.format("%.2f", compressionRate));
 
             // 转换回TrackPoint
             List<TrackPoint> processedTrackPoints = PointConverter.toTrackPoints(processedPoints, trackId);
@@ -111,9 +111,9 @@ public class TrackPointServiceImpl extends ServiceImpl<TrackPointMapper, TrackPo
             // 使用轨迹处理流水线进行处理
             List<Point> processedPoints = trajectoryPipeline.process(points);
 
-            log.info("轨迹 {} 处理完成，原始数量: {}, 处理后数量: {}, 压缩率: {:.2f}%",
-                    trackId, points.size(), processedPoints.size(),
-                    (1.0 - (double) processedPoints.size() / points.size()) * 100);
+            double compressionRate = (1.0 - (double) processedPoints.size() / points.size()) * 100;
+            log.info("轨迹 {} 处理完成，原始数量: {}, 处理后数量: {}, 压缩率: {}%",
+                    trackId, points.size(), processedPoints.size(), String.format("%.2f", compressionRate));
 
             // 删除原始轨迹点
             QueryWrapper<TrackPoint> deleteWrapper = new QueryWrapper<>();
@@ -163,9 +163,9 @@ public class TrackPointServiceImpl extends ServiceImpl<TrackPointMapper, TrackPo
                         10000.0 // 最大距离阈值：10公里（过滤异常跳跃点）
                 );
 
-                log.info("轨迹 {} 热力图数据处理完成，原始点数: {}, 过滤后点数: {}, 过滤率: {:.2f}%",
-                        trackId, points.size(), filteredPoints.size(),
-                        (1.0 - (double) filteredPoints.size() / points.size()) * 100);
+                double filterRate = (1.0 - (double) filteredPoints.size() / points.size()) * 100;
+                log.info("轨迹 {} 热力图数据处理完成，原始点数: {}, 过滤后点数: {}, 过滤率: {}%",
+                        trackId, points.size(), filteredPoints.size(), String.format("%.2f", filterRate));
             } else if (trajectoryPipeline != null) {
                 // 如果单独的服务不可用，但流水线可用，使用流水线的过滤功能
                 log.info("使用轨迹流水线处理轨迹 {} 的热力图数据，原始点数: {}", trackId, points.size());
@@ -200,9 +200,9 @@ public class TrackPointServiceImpl extends ServiceImpl<TrackPointMapper, TrackPo
             // 进行轨迹压缩
             List<Point> compressedPoints = compressionService.compress(points, tolerance);
 
-            log.info("轨迹 {} 压缩完成，原始点数: {}, 压缩后点数: {}, 压缩率: {:.2f}%",
-                    trackId, points.size(), compressedPoints.size(),
-                    (1.0 - (double) compressedPoints.size() / points.size()) * 100);
+            double compressionRate = (1.0 - (double) compressedPoints.size() / points.size()) * 100;
+            log.info("轨迹 {} 压缩完成，原始点数: {}, 压缩后点数: {}, 压缩率: {}%",
+                    trackId, points.size(), compressedPoints.size(), String.format("%.2f", compressionRate));
 
             // 转换回TrackPoint
             return PointConverter.toTrackPoints(compressedPoints, trackId);

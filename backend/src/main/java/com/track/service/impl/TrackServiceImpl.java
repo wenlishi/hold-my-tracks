@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
+import com.track.dto.TrackSimpleDetail;
 import com.track.entity.Track;
 import com.track.entity.TrackPoint;
 import com.track.mapper.TrackMapper;
@@ -218,6 +219,18 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         }
         stats.setTotalDistance(totalDistance);
 
+        // 计算持续时间（秒）
+        if (!trackPoints.isEmpty()) {
+            TrackPoint firstPoint = trackPoints.get(0);
+            TrackPoint lastPoint = trackPoints.get(trackPoints.size() - 1);
+            if (firstPoint.getCreateTime() != null && lastPoint.getCreateTime() != null) {
+                // LocalDateTime 转换为时间戳（毫秒）
+                java.time.Duration duration = java.time.Duration.between(
+                    firstPoint.getCreateTime(), lastPoint.getCreateTime());
+                stats.setDuration(duration.getSeconds());
+            }
+        }
+
         return stats;
     }
 
@@ -331,11 +344,118 @@ public class TrackServiceImpl extends ServiceImpl<TrackMapper, Track> implements
         TrackDetail.TrackStats stats = calculateTrackStats(rawTrackPoints);
         trackDetail.setStats(stats);
 
-        log.info("轨迹 {} 压缩详情生成完成，原始点数: {}, 压缩后点数: {}, 压缩率: {:.2f}%",
-                trackId, rawTrackPoints.size(), compressedTrackPoints.size(),
-                (1.0 - (double) compressedTrackPoints.size() / rawTrackPoints.size()) * 100);
+        double compressionRate = (1.0 - (double) compressedTrackPoints.size() / rawTrackPoints.size()) * 100;
+        log.info("轨迹 {} 压缩详情生成完成，原始点数: {}, 压缩后点数: {}, 压缩率: {}%",
+                trackId, rawTrackPoints.size(), compressedTrackPoints.size(), String.format("%.2f", compressionRate));
 
         return trackDetail;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TrackSimpleDetail getTrackSimpleDetail(Long trackId, Long userId) {
+        // 获取轨迹信息（权限验证已通过AOP处理）
+        Track track = this.getById(trackId);
+        if (track == null) {
+            return null;
+        }
+
+        // 获取轨迹点列表（用于统计计算）
+        List<TrackPoint> trackPoints = trackPointService.findByTrackId(trackId);
+
+        // 创建轨迹简化详情对象
+        TrackSimpleDetail trackSimpleDetail = new TrackSimpleDetail();
+        trackSimpleDetail.setTrack(track);
+
+        // 计算统计信息
+        TrackSimpleDetail.TrackStats stats = calculateSimpleTrackStats(trackPoints);
+        trackSimpleDetail.setStats(stats);
+
+        return trackSimpleDetail;
+    }
+
+    /**
+     * 计算轨迹简化统计信息（不包含轨迹点数据）
+     */
+    private TrackSimpleDetail.TrackStats calculateSimpleTrackStats(List<TrackPoint> trackPoints) {
+        TrackSimpleDetail.TrackStats stats = new TrackSimpleDetail.TrackStats();
+
+        if (trackPoints == null || trackPoints.isEmpty()) {
+            return stats;
+        }
+
+        // 计算总点数
+        stats.setTotalPoints(trackPoints.size());
+
+        // 计算速度统计
+        BigDecimal totalSpeed = BigDecimal.ZERO;
+        BigDecimal maxSpeed = BigDecimal.ZERO;
+        BigDecimal minAltitude = null;
+        BigDecimal maxAltitude = null;
+
+        for (TrackPoint point : trackPoints) {
+            // 速度统计
+            if (point.getSpeed() != null) {
+                totalSpeed = totalSpeed.add(point.getSpeed());
+                if (point.getSpeed().compareTo(maxSpeed) > 0) {
+                    maxSpeed = point.getSpeed();
+                }
+            }
+
+            // 海拔统计
+            if (point.getAltitude() != null) {
+                if (minAltitude == null || point.getAltitude().compareTo(minAltitude) < 0) {
+                    minAltitude = point.getAltitude();
+                }
+                if (maxAltitude == null || point.getAltitude().compareTo(maxAltitude) > 0) {
+                    maxAltitude = point.getAltitude();
+                }
+            }
+        }
+
+        // 平均速度
+        if (trackPoints.size() > 0) {
+            stats.setAverageSpeed(totalSpeed.divide(BigDecimal.valueOf(trackPoints.size()), 2, BigDecimal.ROUND_HALF_UP));
+        }
+
+        stats.setMaxSpeed(maxSpeed);
+
+        // 海拔变化
+        if (minAltitude != null && maxAltitude != null) {
+            stats.setAltitudeChange(maxAltitude.subtract(minAltitude));
+        }
+
+        // 计算轨迹长度（简化的直线距离计算）
+        BigDecimal totalDistance = BigDecimal.ZERO;
+        for (int i = 1; i < trackPoints.size(); i++) {
+            TrackPoint prev = trackPoints.get(i - 1);
+            TrackPoint curr = trackPoints.get(i);
+
+            if (prev.getLatitude() != null && prev.getLongitude() != null &&
+                curr.getLatitude() != null && curr.getLongitude() != null) {
+
+                double distance = calculateDistance(
+                    prev.getLatitude().doubleValue(), prev.getLongitude().doubleValue(),
+                    curr.getLatitude().doubleValue(), curr.getLongitude().doubleValue()
+                );
+                totalDistance = totalDistance.add(BigDecimal.valueOf(distance));
+            }
+        }
+        stats.setTotalDistance(totalDistance);
+
+        // 计算持续时间（秒）
+        if (!trackPoints.isEmpty()) {
+            TrackPoint firstPoint = trackPoints.get(0);
+            TrackPoint lastPoint = trackPoints.get(trackPoints.size() - 1);
+            if (firstPoint.getCreateTime() != null && lastPoint.getCreateTime() != null) {
+                // LocalDateTime 转换为时间戳（毫秒）
+                java.time.Duration duration = java.time.Duration.between(
+                    firstPoint.getCreateTime(), lastPoint.getCreateTime());
+                stats.setDuration(duration.getSeconds());
+            }
+        }
+
+        return stats;
     }
 
     @Override

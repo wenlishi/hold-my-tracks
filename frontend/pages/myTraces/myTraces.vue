@@ -297,23 +297,34 @@ export default {
 
       for (const track of tracks) {
         try {
-          // 获取轨迹详情，包含统计信息
-          const trackDetail = await api.trackApi.getTrackDetail(track.id || track.trackMsg)
+          // 获取轨迹简化详情，包含统计信息（不包含轨迹点数据）
+          const trackSimpleDetail = await api.trackApi.getTrackSimpleDetail(track.id || track.trackMsg)
 
           // 合并轨迹信息和统计信息
           tracksWithStats.push({
             ...track,
-            totalDistance: trackDetail.stats?.totalDistance || 0,
-            totalPoints: trackDetail.stats?.totalPoints || 0
+            totalDistance: trackSimpleDetail.stats?.totalDistance || 0,
+            totalPoints: trackSimpleDetail.stats?.totalPoints || 0
           })
         } catch (error) {
-          console.error(`获取轨迹 ${track.id || track.trackMsg} 详情失败:`, error)
-          // 如果获取详情失败，使用原始数据
-          tracksWithStats.push({
-            ...track,
-            totalDistance: track.totalDistance || 0,
-            totalPoints: track.totalPoints || 0
-          })
+          console.error(`获取轨迹 ${track.id || track.trackMsg} 简化详情失败:`, error)
+          // 如果获取简化详情失败，尝试使用原始详情接口（兼容性）
+          try {
+            const trackDetail = await api.trackApi.getTrackDetail(track.id || track.trackMsg)
+            tracksWithStats.push({
+              ...track,
+              totalDistance: trackDetail.stats?.totalDistance || 0,
+              totalPoints: trackDetail.stats?.totalPoints || 0
+            })
+          } catch (detailError) {
+            console.error(`获取轨迹 ${track.id || track.trackMsg} 详情也失败:`, detailError)
+            // 如果都失败，使用原始数据
+            tracksWithStats.push({
+              ...track,
+              totalDistance: track.totalDistance || 0,
+              totalPoints: track.totalPoints || 0
+            })
+          }
         }
       }
 

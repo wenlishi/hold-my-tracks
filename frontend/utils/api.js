@@ -217,8 +217,16 @@ export const trackApi = {
     });
   },
 
+  // 获取轨迹简化详情（不包含轨迹点数据）
+  getTrackSimpleDetail: (id) => {
+    return request({
+      url: `/tracks/${id}/simple-detail`,
+      method: 'GET'
+    });
+  },
+
   // 获取压缩后的轨迹详情
-  getCompressedTrackDetail: (id, tolerance = 10.0) => {
+  getCompressedTrackDetail: (id, tolerance = 1.0) => {
     return request({
       url: `/tracks/${id}/detail/compressed`,
       method: 'GET',
@@ -297,7 +305,7 @@ export const trackPointApi = {
   },
 
   // 获取压缩后的轨迹点列表（用于轨迹展示）
-  getCompressedPoints: (trackId, tolerance = 10.0) => {
+  getCompressedPoints: (trackId, tolerance = 1.0) => {
     return request({
       url: `/tracks/${trackId}/points/compressed`,
       method: 'GET',

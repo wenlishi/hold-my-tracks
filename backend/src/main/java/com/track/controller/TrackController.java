@@ -5,6 +5,7 @@ import com.track.annotation.RequirePermission;
 import com.track.common.Result;
 import com.track.dto.PageResponse;
 import com.track.dto.TrackDetail;
+import com.track.dto.TrackSimpleDetail;
 import com.track.entity.Track;
 import com.track.security.UserPrincipal;
 import com.track.service.TrackExportService;
@@ -141,6 +142,23 @@ public class TrackController {
         TrackDetail trackDetail = trackService.getTrackDetail(id, userId);
 
         return ResponseEntity.ok(Result.success(trackDetail));
+    }
+
+    @Operation(summary = "获取轨迹简化详情", description = "获取轨迹的简化详情，包含轨迹信息和统计信息，不包含轨迹点数据")
+    @GetMapping("/{id}/simple-detail")
+    @RequirePermission(resourceType = "track", resourceIdParam = "id")
+    @LogOperation(operation = "查询轨迹简化详情", resourceId = "#id")
+    public ResponseEntity<Result<TrackSimpleDetail>> getTrackSimpleDetail(
+            @Parameter(description = "轨迹ID", required = true) @PathVariable Long id,
+            Authentication authentication) {
+        // 1. 获取当前用户 ID
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        // 2. 调用 Service (传入 trackId 和 userId)
+        TrackSimpleDetail trackSimpleDetail = trackService.getTrackSimpleDetail(id, userId);
+
+        return ResponseEntity.ok(Result.success(trackSimpleDetail));
     }
 
     @Operation(summary = "搜索轨迹", description = "根据关键字和日期范围搜索用户的轨迹")
